@@ -37,9 +37,53 @@ export class TorrentContentStorage extends EngineComponent {
     this.filePriorities = new Array(files.length).fill(0)
     this.logger.debug(`DiskManager ${this.id}: Opened with ${files.length} files`)
 
-    // Pre-open files or open on demand? Let's open on demand for now to save resources,
-    // but for simplicity in this phase, we might just open them all if the list is small.
-    // Let's stick to open-on-demand logic implicitly in read/write.
+    // Pre-allocate files if filesystem supports it (enables mmap for faster writes)
+    await this.preallocateFiles()
+  }
+
+  /**
+   * Pre-allocate all files if the filesystem supports it.
+   * This enables memory-mapped I/O for significantly faster writes.
+   */
+  private async preallocateFiles(): Promise<void> {
+    const fs = this.storageHandle.getFileSystem()
+
+    // Check if filesystem supports preallocation
+    if (!fs.preallocate) {
+      this.logger.debug(`DiskManager ${this.id}: Filesystem does not support preallocate, skipping`)
+      return
+    }
+
+    const totalSize = this.files.reduce((sum, f) => sum + f.length, 0)
+    this.logger.info(
+      `DiskManager ${this.id}: Pre-allocating ${this.files.length} files (${(totalSize / (1024 * 1024)).toFixed(1)}MB total)`,
+    )
+
+    const startTime = Date.now()
+    let allocatedCount = 0
+    let allocatedSize = 0
+
+    for (const file of this.files) {
+      try {
+        const success = await fs.preallocate(file.path, file.length)
+        if (success) {
+          allocatedCount++
+          allocatedSize += file.length
+          this.logger.debug(
+            `DiskManager ${this.id}: Pre-allocated ${file.path} (${(file.length / (1024 * 1024)).toFixed(1)}MB)`,
+          )
+        }
+      } catch (e) {
+        // Non-fatal - file writes will still work, just slower
+        this.logger.warn(`DiskManager ${this.id}: Pre-allocation failed for ${file.path}: ${e}`)
+      }
+    }
+
+    const elapsed = Date.now() - startTime
+    this.logger.info(
+      `DiskManager ${this.id}: Pre-allocated ${allocatedCount}/${this.files.length} files ` +
+        `(${(allocatedSize / (1024 * 1024)).toFixed(1)}MB) in ${elapsed}ms`,
+    )
   }
 
   /**

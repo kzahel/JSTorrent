@@ -18,10 +18,14 @@ private const val TAG = "FileManagerImpl"
  *
  * @param context Android context for SAF operations (ContentResolver access)
  * @param maxCacheSize Maximum number of DocumentFile references to cache (default: 200)
+ * @param fileHandlePool Optional pool for keeping file handles open across writes.
+ *                       When provided, writes use pooled handles to avoid repeated
+ *                       open/close overhead (~10-15ms per SAF open).
  */
 class FileManagerImpl(
     private val context: Context,
-    maxCacheSize: Int = 200
+    maxCacheSize: Int = 200,
+    private val fileHandlePool: FileHandlePool? = null,
 ) : FileManager {
 
     /**
@@ -104,14 +108,19 @@ class FileManagerImpl(
                 cacheFile(rootUri, relativePath, file)
             }
 
-            // Use ParcelFileDescriptor for true random access writes
-            context.contentResolver.openFileDescriptor(file.uri, "rw")?.use { pfd ->
-                FileOutputStream(pfd.fileDescriptor).use { fos ->
-                    val channel = fos.channel
-                    channel.position(offset)
-                    channel.write(ByteBuffer.wrap(data))
-                }
-            } ?: throw FileManagerException.CannotOpenFile(relativePath)
+            // Use pooled handle if available, otherwise open/close each time
+            if (fileHandlePool != null) {
+                fileHandlePool.writeAt(file, offset, data)
+            } else {
+                // Fallback: open/close each time (slower, ~10-15ms overhead per write)
+                context.contentResolver.openFileDescriptor(file.uri, "rw")?.use { pfd ->
+                    FileOutputStream(pfd.fileDescriptor).use { fos ->
+                        val channel = fos.channel
+                        channel.position(offset)
+                        channel.write(ByteBuffer.wrap(data))
+                    }
+                } ?: throw FileManagerException.CannotOpenFile(relativePath)
+            }
         } catch (e: FileManagerException) {
             throw e
         } catch (e: Exception) {
@@ -149,6 +158,7 @@ class FileManagerImpl(
         synchronized(cacheLock) {
             documentFileCache.clear()
         }
+        fileHandlePool?.closeAll()
     }
 
     override fun stat(rootUri: Uri, relativePath: String): FileStat? {
@@ -378,12 +388,16 @@ class FileManagerImpl(
     private fun writeNative(rootUri: Uri, relativePath: String, offset: Long, data: ByteArray) {
         val file = resolveNativeFile(rootUri, relativePath)
         try {
-            // Create parent directories if needed
-            file.parentFile?.mkdirs()
-
-            RandomAccessFile(file, "rw").use { raf ->
-                raf.seek(offset)
-                raf.write(data)
+            // Use pooled handle if available
+            if (fileHandlePool != null) {
+                fileHandlePool.writeAt(file, offset, data)
+            } else {
+                // Fallback: open/close each time
+                file.parentFile?.mkdirs()
+                RandomAccessFile(file, "rw").use { raf ->
+                    raf.seek(offset)
+                    raf.write(data)
+                }
             }
         } catch (e: Exception) {
             Log.e(TAG, "Native write failed: ${e.message}", e)
@@ -435,6 +449,69 @@ class FileManagerImpl(
             file.deleteRecursively()
         } else {
             file.delete()
+        }
+    }
+
+    override fun preallocate(rootUri: Uri, relativePath: String, size: Long): Boolean {
+        if (isFileUri(rootUri)) {
+            return preallocateNative(rootUri, relativePath, size)
+        }
+
+        // SAF pre-allocation: create file and register for mmap
+        try {
+            var file = getCachedFile(rootUri, relativePath)
+            if (file == null) {
+                file = createFile(rootUri, relativePath)
+                    ?: return false
+                cacheFile(rootUri, relativePath, file)
+            }
+
+            // Use FileHandlePool if available (enables mmap for subsequent writes)
+            if (fileHandlePool != null) {
+                return fileHandlePool.preallocate(file, size)
+            }
+
+            // Fallback: direct pre-allocation without mmap tracking
+            context.contentResolver.openFileDescriptor(file.uri, "rw")?.use { pfd ->
+                java.io.FileOutputStream(pfd.fileDescriptor).use { fos ->
+                    fos.channel.use { channel ->
+                        // Truncate/extend to the desired size
+                        channel.truncate(size)
+                        // Position at end to force allocation
+                        if (size > 0) {
+                            channel.position(size - 1)
+                            channel.write(java.nio.ByteBuffer.wrap(byteArrayOf(0)))
+                        }
+                    }
+                }
+            } ?: return false
+
+            Log.i(TAG, "Pre-allocated SAF file: $relativePath (${size / (1024 * 1024)}MB)")
+            return true
+        } catch (e: Exception) {
+            Log.e(TAG, "SAF pre-allocation failed: $relativePath", e)
+            return false
+        }
+    }
+
+    private fun preallocateNative(rootUri: Uri, relativePath: String, size: Long): Boolean {
+        val file = resolveNativeFile(rootUri, relativePath)
+        try {
+            // Use FileHandlePool if available (enables mmap for subsequent writes)
+            if (fileHandlePool != null) {
+                return fileHandlePool.preallocate(file, size)
+            }
+
+            // Fallback: direct pre-allocation
+            file.parentFile?.mkdirs()
+            RandomAccessFile(file, "rw").use { raf ->
+                raf.setLength(size)
+            }
+            Log.i(TAG, "Pre-allocated native file: $relativePath (${size / (1024 * 1024)}MB)")
+            return true
+        } catch (e: Exception) {
+            Log.e(TAG, "Native pre-allocation failed: $relativePath", e)
+            return false
         }
     }
 }

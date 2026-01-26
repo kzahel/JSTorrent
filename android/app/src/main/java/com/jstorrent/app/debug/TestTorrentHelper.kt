@@ -73,7 +73,8 @@ object TestTorrentHelper {
         "10.0.2.2",       // Emulator → host
         "127.0.0.1",      // Localhost (ADB reverse)
         "100.115.92.206", // Crostini on ChromeOS
-        "192.168.1.131",  // Dev machine LAN IP
+        "192.168.1.107",  // Dev machine LAN IP
+        "192.168.1.131",  // Dev machine LAN IP (alternate)
         "192.168.1.139"   // Dev machine LAN IP (alternate)
     )
 

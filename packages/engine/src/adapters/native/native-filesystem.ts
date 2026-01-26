@@ -85,4 +85,12 @@ export class NativeFileSystem implements IFileSystem {
       throw new Error(`Failed to delete: ${path}`)
     }
   }
+
+  /**
+   * Pre-allocate a file with the specified size.
+   * Enables memory-mapped I/O for faster subsequent writes.
+   */
+  async preallocate(path: string, size: number): Promise<boolean> {
+    return __jstorrent_file_preallocate(this.rootKey, path, size)
+  }
 }

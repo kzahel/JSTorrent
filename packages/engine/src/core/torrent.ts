@@ -147,7 +147,9 @@ export class Torrent extends EngineComponent {
   public lastPieceLength: number = 0
   public piecesCount: number = 0
   public contentStorage?: TorrentContentStorage
-  private _diskQueue: TorrentDiskQueue = new TorrentDiskQueue()
+  // High maxWorkers (32) to buffer through JS thread latency spikes (can be 200-500ms)
+  // With 32 concurrent writes and ~14ms per write, we can sustain ~80MB/s even with JS delays
+  private _diskQueue: TorrentDiskQueue = new TorrentDiskQueue({ maxWorkers: 32 })
   private _endgameManager: EndgameManager = new EndgameManager()
 
   // Batched request scheduling to reduce overhead when many blocks arrive quickly

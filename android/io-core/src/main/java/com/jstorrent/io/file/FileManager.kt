@@ -126,4 +126,19 @@ interface FileManager {
      * @return true if deleted successfully, false if doesn't exist or deletion failed
      */
     fun delete(rootUri: Uri, relativePath: String): Boolean
+
+    /**
+     * Pre-allocate a file with the specified size.
+     *
+     * This creates the file (and parent directories) and allocates space upfront.
+     * Subsequent writes to this file may be faster due to:
+     * - No per-write block allocation
+     * - Ability to use memory-mapped I/O
+     *
+     * @param rootUri SAF tree URI for the root
+     * @param relativePath Path relative to root
+     * @param size Total size to allocate in bytes
+     * @return true if pre-allocation succeeded, false otherwise
+     */
+    fun preallocate(rootUri: Uri, relativePath: String, size: Long): Boolean
 }

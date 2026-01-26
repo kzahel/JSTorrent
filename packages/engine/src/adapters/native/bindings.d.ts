@@ -201,6 +201,14 @@ declare global {
   function __jstorrent_file_delete(rootKey: string, path: string): boolean
 
   /**
+   * Pre-allocate a file with the specified size.
+   * Creates the file (and parent directories) and allocates space upfront.
+   * Enables memory-mapped I/O for faster subsequent writes.
+   * Returns true on success.
+   */
+  function __jstorrent_file_preallocate(rootKey: string, path: string, size: number): boolean
+
+  /**
    * Async verified write: hash data, compare to expected, write if match.
    * Runs on background thread to avoid blocking JS. Result delivered via callback.
    *

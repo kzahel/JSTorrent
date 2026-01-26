@@ -386,7 +386,7 @@ export function setupController(getEngine: () => BtEngine | null, isReady: () =>
     }
 
     const testMagnet =
-      'magnet:?xt=urn:btih:67d01ece1b99c49c257baada0f760b770a7530b9&dn=testdata_100mb.bin&x.pe=10.0.2.2:6881&x.pe=127.0.0.1:6881'
+      'magnet:?xt=urn:btih:67d01ece1b99c49c257baada0f760b770a7530b9&dn=testdata_100mb.bin&x.pe=10.0.2.2:6881&x.pe=127.0.0.1:6881&x.pe=100.115.92.206:6881&x.pe=192.168.1.107:6881&x.pe=192.168.1.131:6881&x.pe=192.168.1.139:6881'
     console.log('[controller] Adding test torrent with peer hint...')
     ;(async () => {
       try {

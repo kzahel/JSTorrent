@@ -3,6 +3,7 @@ package com.jstorrent.quickjs
 import android.content.Context
 import android.net.Uri
 import android.util.Log
+import com.jstorrent.io.file.FileHandlePool
 import com.jstorrent.io.file.FileManager
 import com.jstorrent.io.file.FileManagerImpl
 import com.jstorrent.quickjs.bindings.EngineErrorListener
@@ -50,13 +51,15 @@ private const val TAG = "EngineController"
  *
  * @param context Android context
  * @param scope Coroutine scope for I/O operations
- * @param fileManager Optional FileManager for file I/O (defaults to FileManagerImpl)
+ * @param fileManager Optional FileManager for file I/O (defaults to FileManagerImpl with handle pooling)
  * @param rootResolver Optional resolver for rootKey → SAF URI (defaults to app-private fallback)
+ * @param fileHandlePool Optional pool for keeping file handles open (defaults to new pool with 64 handles)
  */
 class EngineController(
     private val context: Context,
     private val scope: CoroutineScope,
-    private val fileManager: FileManager = FileManagerImpl(context),
+    private val fileHandlePool: FileHandlePool = FileHandlePool(context),
+    private val fileManager: FileManager = FileManagerImpl(context, fileHandlePool = fileHandlePool),
     private val rootResolver: (String) -> Uri? = { null },
 ) : Closeable {
 
@@ -771,6 +774,9 @@ class EngineController(
 
         engine?.close()
         engine = null
+
+        // Close file handle pool
+        fileHandlePool.closeAll()
 
         _isLoaded.value = false
         _state.value = null

@@ -63,6 +63,15 @@ class FileBindings(
         @Volatile private var totalWriteTimeMs = 0L
         @Volatile private var maxWriteLatencyMs = 0L
         @Volatile private var lastLogTime = System.currentTimeMillis()
+
+        // Detailed timing instrumentation for async writes
+        @Volatile private var pendingWrites = 0
+        @Volatile private var maxPendingWrites = 0
+        @Volatile private var totalDispatchDelayNs = 0L  // Time waiting for coroutine to start
+        @Volatile private var totalHashTimeNs = 0L
+        @Volatile private var totalWriteTimeNs = 0L
+        @Volatile private var totalPostTimeNs = 0L  // Time for jsThread.post to complete
+        @Volatile private var instrumentedCount = 0
     }
 
     // App-private downloads directory (fallback when rootKey is empty/"default")
@@ -184,6 +193,27 @@ class FileBindings(
      * Register functions that operate on paths.
      */
     private fun registerPathFunctions(ctx: QuickJsContext) {
+        // __jstorrent_file_preallocate(rootKey: string, path: string, size: number): boolean
+        // Pre-allocate file for faster writes (enables memory-mapped I/O)
+        ctx.setGlobalFunction("__jstorrent_file_preallocate") { args ->
+            val rootKey = args.getOrNull(0) ?: ""
+            val path = args.getOrNull(1) ?: ""
+            val size = args.getOrNull(2)?.toLongOrNull() ?: 0L
+
+            if (path.isEmpty() || size <= 0) {
+                return@setGlobalFunction "false"
+            }
+
+            val rootUri = resolveRoot(rootKey) ?: return@setGlobalFunction "false"
+
+            try {
+                fileManager.preallocate(rootUri, path, size).toString()
+            } catch (e: Exception) {
+                Log.e(TAG, "Preallocate failed: $path", e)
+                "false"
+            }
+        }
+
         // __jstorrent_file_stat(rootKey: string, path: string): string | null
         ctx.setGlobalFunction("__jstorrent_file_stat") { args ->
             val rootKey = args.getOrNull(0) ?: ""
@@ -332,18 +362,31 @@ class FileBindings(
                 return@setGlobalFunctionWithBinary null
             }
 
+            // Track pending writes for backpressure detection
+            val queuedAtNs = System.nanoTime()
+            synchronized(Companion) {
+                pendingWrites++
+                if (pendingWrites > maxPendingWrites) {
+                    maxPendingWrites = pendingWrites
+                }
+            }
+
             // Launch async work on I/O dispatcher
             ioScope.launch {
-                val startTime = System.currentTimeMillis()
+                val dispatchedAtNs = System.nanoTime()
+                val dispatchDelayNs = dispatchedAtNs - queuedAtNs
 
                 try {
                     // 1. Hash the data
+                    val hashStartNs = System.nanoTime()
                     val actualHash = Hasher.sha1(binary)
                     val actualHashHex = actualHash.joinToString("") { "%02x".format(it) }
+                    val hashTimeNs = System.nanoTime() - hashStartNs
 
                     // 2. Compare hashes
                     if (!actualHashHex.equals(expectedSha1Hex, ignoreCase = true)) {
                         Log.w(TAG, "write_verified: hash mismatch for $path")
+                        synchronized(Companion) { pendingWrites-- }
                         jsThread.post {
                             ctx.callGlobalFunction(
                                 "__jstorrent_file_dispatch_write_result",
@@ -357,36 +400,12 @@ class FileBindings(
                     }
 
                     // 3. Write the data (hash matched)
+                    val writeStartNs = System.nanoTime()
                     fileManager.write(rootUri, path, offset, binary)
-                    val elapsed = System.currentTimeMillis() - startTime
-
-                    // Track stats
-                    synchronized(Companion) {
-                        bytesWritten += binary.size
-                        writeCount++
-                        totalWriteTimeMs += elapsed
-                        if (elapsed > maxWriteLatencyMs) {
-                            maxWriteLatencyMs = elapsed
-                        }
-
-                        // Log every 5 seconds
-                        val now = System.currentTimeMillis()
-                        val sinceLastLog = now - lastLogTime
-                        if (sinceLastLog >= 5000) {
-                            val mbWritten = bytesWritten / (1024.0 * 1024.0)
-                            val mbps = mbWritten / (sinceLastLog / 1000.0)
-                            val avgLatency = if (writeCount > 0) totalWriteTimeMs / writeCount else 0
-                            Log.i(TAG, "Verified write: %.2f MB/s, %d writes, avg %dms, max %dms".format(
-                                mbps, writeCount, avgLatency, maxWriteLatencyMs))
-                            bytesWritten = 0
-                            writeCount = 0
-                            totalWriteTimeMs = 0
-                            maxWriteLatencyMs = 0
-                            lastLogTime = now
-                        }
-                    }
+                    val writeTimeNs = System.nanoTime() - writeStartNs
 
                     // 4. Post success back to JS thread
+                    val postStartNs = System.nanoTime()
                     jsThread.post {
                         ctx.callGlobalFunction(
                             "__jstorrent_file_dispatch_write_result",
@@ -396,9 +415,64 @@ class FileBindings(
                         )
                         jsThread.scheduleJobPump(ctx)
                     }
+                    val postTimeNs = System.nanoTime() - postStartNs
+
+                    val totalElapsedMs = (System.nanoTime() - queuedAtNs) / 1_000_000
+
+                    // Track detailed stats
+                    synchronized(Companion) {
+                        pendingWrites--
+                        bytesWritten += binary.size
+                        writeCount++
+                        totalWriteTimeMs += totalElapsedMs
+                        if (totalElapsedMs > maxWriteLatencyMs) {
+                            maxWriteLatencyMs = totalElapsedMs
+                        }
+
+                        // Accumulate detailed timing
+                        totalDispatchDelayNs += dispatchDelayNs
+                        totalHashTimeNs += hashTimeNs
+                        totalWriteTimeNs += writeTimeNs
+                        totalPostTimeNs += postTimeNs
+                        instrumentedCount++
+
+                        // Log every 5 seconds with detailed breakdown
+                        val now = System.currentTimeMillis()
+                        val sinceLastLog = now - lastLogTime
+                        if (sinceLastLog >= 5000 && instrumentedCount > 0) {
+                            val mbWritten = bytesWritten / (1024.0 * 1024.0)
+                            val mbps = mbWritten / (sinceLastLog / 1000.0)
+                            val avgTotalMs = if (writeCount > 0) totalWriteTimeMs / writeCount else 0
+
+                            // Convert ns totals to ms averages
+                            val avgDispatchMs = (totalDispatchDelayNs / instrumentedCount) / 1_000_000.0
+                            val avgHashMs = (totalHashTimeNs / instrumentedCount) / 1_000_000.0
+                            val avgWriteMs = (totalWriteTimeNs / instrumentedCount) / 1_000_000.0
+                            val avgPostMs = (totalPostTimeNs / instrumentedCount) / 1_000_000.0
+
+                            Log.i(TAG, "Verified write: %.2f MB/s, %d writes, pending=%d (max=%d)".format(
+                                mbps, writeCount, pendingWrites, maxPendingWrites))
+                            Log.i(TAG, "  Timing breakdown: total=%dms, dispatch=%.1fms, hash=%.1fms, write=%.1fms, post=%.1fms".format(
+                                avgTotalMs, avgDispatchMs, avgHashMs, avgWriteMs, avgPostMs))
+
+                            // Reset counters
+                            bytesWritten = 0
+                            writeCount = 0
+                            totalWriteTimeMs = 0
+                            maxWriteLatencyMs = 0
+                            totalDispatchDelayNs = 0
+                            totalHashTimeNs = 0
+                            totalWriteTimeNs = 0
+                            totalPostTimeNs = 0
+                            instrumentedCount = 0
+                            maxPendingWrites = pendingWrites
+                            lastLogTime = now
+                        }
+                    }
 
                 } catch (e: Exception) {
                     Log.e(TAG, "write_verified failed: $path", e)
+                    synchronized(Companion) { pendingWrites-- }
                     jsThread.post {
                         ctx.callGlobalFunction(
                             "__jstorrent_file_dispatch_write_result",

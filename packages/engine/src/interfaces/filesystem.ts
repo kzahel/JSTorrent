@@ -77,4 +77,15 @@ export interface IFileSystem {
    * Delete a file or directory.
    */
   delete(path: string): Promise<void>
+
+  /**
+   * Pre-allocate a file with the specified size.
+   * Creates the file (and parent directories) and allocates space upfront.
+   * This can significantly speed up subsequent writes by:
+   * - Avoiding per-write block allocation
+   * - Enabling memory-mapped I/O on supported platforms
+   *
+   * Optional - implementations may return false or throw if not supported.
+   */
+  preallocate?(path: string, size: number): Promise<boolean>
 }
