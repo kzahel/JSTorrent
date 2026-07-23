@@ -48,7 +48,7 @@
     "url": "https://github.com/kzahel/jstorrent/issues"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=24"
   },
   "scripts": {
     "postinstall": "[ -f src/geo/ipv4-country-data.ts ] || cp src/geo/ipv4-country-data.stub.ts src/geo/ipv4-country-data.ts",

@@ -165,12 +165,12 @@ integration Python tests used by the root workspace.
 
 ### 5. Supported Toolchains And CI Reproducibility
 
-- [ ] Install or update NVM on this development machine from its official
+- [x] Install or update NVM on this development machine from its official
   source.
-- [ ] Pin Node 24 in `.nvmrc`, package engines, and workflows.
-- [ ] Reassess the Node minimum advertised by published packages and test every
+- [x] Pin Node 24 in `.nvmrc`, package engines, and workflows.
+- [x] Reassess the Node minimum advertised by published packages and test every
   advertised supported major.
-- [ ] Upgrade pnpm after Node 24 is active and validate the resulting lockfile.
+- [x] Upgrade pnpm after Node 24 is active and validate the resulting lockfile.
 - [ ] Pin a Rust toolchain for release reproducibility.
 - [ ] Update maintained GitHub Actions to current supported majors.
 - [ ] Use `pnpm install --frozen-lockfile` consistently in CI.
@@ -241,5 +241,27 @@ stale paths.
 
 ## Execution Record
 
-This section will be updated at each checkpoint with commits, important
-decisions, validation results, audit deltas, and explicit deferrals.
+### Tactical Creation
+
+Commit `29c9326e` created this tactical and its index before implementation
+began. Documentation checks and focused Prettier validation passed.
+
+### Node And pnpm Baseline
+
+The development machine already had current NVM 0.40.3, so no installer script
+was needed. NVM now has Node 24.18.0 installed and makes major 24 the default.
+The repository pins Node 24 for local and CI use, and the published engine and
+plugin SDK now advertise Node 24 as their sole supported major rather than
+claiming untested support for end-of-life Node versions.
+
+pnpm is pinned to 11.16.0. pnpm 11's dependency-build policy explicitly allows
+the required esbuild and sharp install scripts; no other dependency lifecycle
+scripts are approved.
+
+Validation under Node 24.18.0 and pnpm 11.16.0:
+
+- frozen-lockfile install passed
+- documentation checks passed
+- workspace typechecks passed
+- workspace tests passed
+- focused workflow and manifest formatting passed

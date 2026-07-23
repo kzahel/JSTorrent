@@ -3,3 +3,6 @@ packages:
   - 'desktop/tauri-app'
   - 'packages/*'
   - 'website'
+allowBuilds:
+  esbuild: true
+  sharp: true
