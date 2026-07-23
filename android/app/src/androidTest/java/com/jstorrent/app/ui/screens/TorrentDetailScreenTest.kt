@@ -147,21 +147,20 @@ class TorrentDetailScreenTest {
             }
         }
 
-        // Note: Tab labels may appear multiple times (once in tabs, once in StatusTab stats).
-        // We verify at least one instance of each tab label exists.
-        composeTestRule.onAllNodesWithText("STATUS").fetchSemanticsNodes().isNotEmpty().let {
+        // Tab titles come from localized title-case string resources.
+        composeTestRule.onAllNodesWithText("Status").fetchSemanticsNodes().isNotEmpty().let {
             assert(it) { "STATUS tab should be displayed" }
         }
-        composeTestRule.onAllNodesWithText("FILES").fetchSemanticsNodes().isNotEmpty().let {
+        composeTestRule.onAllNodesWithText("Files").fetchSemanticsNodes().isNotEmpty().let {
             assert(it) { "FILES tab should be displayed" }
         }
-        composeTestRule.onAllNodesWithText("TRACKERS").fetchSemanticsNodes().isNotEmpty().let {
+        composeTestRule.onAllNodesWithText("Trackers").fetchSemanticsNodes().isNotEmpty().let {
             assert(it) { "TRACKERS tab should be displayed" }
         }
-        composeTestRule.onAllNodesWithText("PEERS").fetchSemanticsNodes().isNotEmpty().let {
+        composeTestRule.onAllNodesWithText("Peers").fetchSemanticsNodes().isNotEmpty().let {
             assert(it) { "PEERS tab should be displayed" }
         }
-        composeTestRule.onAllNodesWithText("PIECES").fetchSemanticsNodes().isNotEmpty().let {
+        composeTestRule.onAllNodesWithText("Pieces").fetchSemanticsNodes().isNotEmpty().let {
             assert(it) { "PIECES tab should be displayed" }
         }
     }
@@ -191,8 +190,7 @@ class TorrentDetailScreenTest {
             }
         }
 
-        // Click FILES tab - may appear multiple times (tab + status section), click the first one
-        composeTestRule.onAllNodesWithText("FILES")[0].performClick()
+        composeTestRule.onNodeWithText("Files").performClick()
         composeTestRule.waitForIdle()
 
         // File should be displayed

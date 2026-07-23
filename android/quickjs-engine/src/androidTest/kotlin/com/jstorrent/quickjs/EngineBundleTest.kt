@@ -2,6 +2,11 @@ package com.jstorrent.quickjs
 
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import com.jstorrent.io.file.FileManagerImpl
+import com.jstorrent.quickjs.bindings.NativeBindings
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import org.junit.After
 import org.junit.Before
 import org.junit.Test
@@ -17,82 +22,94 @@ import kotlin.test.assertEquals
 @RunWith(AndroidJUnit4::class)
 class EngineBundleTest {
 
-    private lateinit var ctx: QuickJsContext
+    private lateinit var engine: QuickJsEngine
+    private lateinit var bindings: NativeBindings
     private lateinit var bundleContent: String
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     @Before
     fun setUp() {
-        ctx = QuickJsContext.create()
+        val instrumentation = InstrumentationRegistry.getInstrumentation()
+        val context = instrumentation.targetContext
+        engine = QuickJsEngine()
+        bindings = NativeBindings(context, engine.jsThread, scope, FileManagerImpl(context))
+        engine.postAndWait {
+            bindings.registerAll(engine.context)
+        }
 
-        // Load engine bundle from assets
-        val context = InstrumentationRegistry.getInstrumentation().context
-        bundleContent = context.assets.open("engine.bundle.js").bufferedReader().use { it.readText() }
+        // Load engine bundle from the test APK assets.
+        val testContext = instrumentation.context
+        bundleContent = testContext.assets
+            .open("engine.bundle.js")
+            .bufferedReader()
+            .use { it.readText() }
     }
 
     @After
     fun tearDown() {
-        ctx.close()
+        bindings.shutdown()
+        engine.close()
     }
 
     @Test
     fun bundleLoadsWithoutError() {
         // Evaluate the bundle - should not throw
-        ctx.evaluate(bundleContent, "engine.bundle.js")
+        engine.evaluate(bundleContent, "engine.bundle.js")
     }
 
     @Test
     fun jstorrentGlobalIsObject() {
-        ctx.evaluate(bundleContent, "engine.bundle.js")
+        engine.evaluate(bundleContent, "engine.bundle.js")
 
-        val result = ctx.evaluate("typeof jstorrent")
+        val result = engine.evaluate("typeof jstorrent")
         assertEquals("object", result, "jstorrent should be an object")
     }
 
     @Test
     fun jstorrentInitIsFunction() {
-        ctx.evaluate(bundleContent, "engine.bundle.js")
+        engine.evaluate(bundleContent, "engine.bundle.js")
 
-        val result = ctx.evaluate("typeof jstorrent.init")
+        val result = engine.evaluate("typeof jstorrent.init")
         assertEquals("function", result, "jstorrent.init should be a function")
     }
 
     @Test
     fun jstorrentIsInitializedIsFunction() {
-        ctx.evaluate(bundleContent, "engine.bundle.js")
+        engine.evaluate(bundleContent, "engine.bundle.js")
 
-        val result = ctx.evaluate("typeof jstorrent.isInitialized")
+        val result = engine.evaluate("typeof jstorrent.isInitialized")
         assertEquals("function", result, "jstorrent.isInitialized should be a function")
     }
 
     @Test
     fun jstorrentShutdownIsFunction() {
-        ctx.evaluate(bundleContent, "engine.bundle.js")
+        engine.evaluate(bundleContent, "engine.bundle.js")
 
-        val result = ctx.evaluate("typeof jstorrent.shutdown")
+        val result = engine.evaluate("typeof jstorrent.shutdown")
         assertEquals("function", result, "jstorrent.shutdown should be a function")
     }
 
     @Test
     fun jstorrentGetEngineIsFunction() {
-        ctx.evaluate(bundleContent, "engine.bundle.js")
+        engine.evaluate(bundleContent, "engine.bundle.js")
 
-        val result = ctx.evaluate("typeof jstorrent.getEngine")
+        val result = engine.evaluate("typeof jstorrent.getEngine")
         assertEquals("function", result, "jstorrent.getEngine should be a function")
     }
 
     @Test
     fun isInitializedReturnsFalseBeforeInit() {
-        ctx.evaluate(bundleContent, "engine.bundle.js")
+        engine.evaluate(bundleContent, "engine.bundle.js")
 
-        val result = ctx.evaluate("jstorrent.isInitialized()")
+        val result = engine.evaluate("jstorrent.isInitialized()")
         assertEquals(false, result, "isInitialized() should return false before init")
     }
 
     @Test
     fun getEngineReturnsNullBeforeInit() {
-        ctx.evaluate(bundleContent, "engine.bundle.js")
+        engine.evaluate(bundleContent, "engine.bundle.js")
 
-        val result = ctx.evaluate("jstorrent.getEngine()")
+        val result = engine.evaluate("jstorrent.getEngine()")
         assertEquals(null, result, "getEngine() should return null before init")
     }
 }

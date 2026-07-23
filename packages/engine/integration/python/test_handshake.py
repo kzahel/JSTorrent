@@ -35,17 +35,18 @@ def main() -> int:
                 # Connect to Libtorrent peer
                 engine.add_peer(tid, "127.0.0.1", port)
 
-                # Verify Handshake - poll for connection
-                def both_connected():
-                    status = engine.get_torrent_status(tid)
-                    engine_connected = status.get("peers", 0) > 0
-                    s = lt_handle.status()
-                    lt_saw_peer = s.num_peers > 0
-                    print(f"LT Peers: {s.num_peers}, Engine peers: {status.get('peers', 0)}")
-                    return engine_connected and lt_saw_peer
+                # A remote peer ID or any download progress proves the BitTorrent
+                # handshake completed. On localhost the transfer can finish and
+                # disconnect entirely between peer-info polls.
+                def handshake_completed():
+                    peers = engine.get_peer_info(tid).get("peers", [])
+                    peer_ids = [peer.get("peerId") for peer in peers]
+                    progress = engine.get_torrent_status(tid).get("progress", 0)
+                    print(f"Engine peer IDs: {peer_ids}, progress: {progress:.1%}")
+                    return any(peer_id for peer_id in peer_ids) or progress > 0
 
-                if not wait_for(both_connected, timeout=10, description="handshake"):
-                    return fail("Handshake failed: Engine or Libtorrent did not see the peer")
+                if not wait_for(handshake_completed, timeout=10, description="handshake"):
+                    return fail("Handshake failed: Engine received neither a peer ID nor data")
 
     return passed("Handshake successful")
 

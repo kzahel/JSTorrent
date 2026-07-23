@@ -150,7 +150,7 @@ PYEOF
 fi
 
 # Check/Install Android SDK
-if [ ! -d "$SDK_DIR/platforms/android-35" ]; then
+if [ ! -d "$SDK_DIR/platforms/android-36" ]; then
     echo "Installing Android SDK..."
     mkdir -p "$SDK_DIR"
 
@@ -174,7 +174,7 @@ if [ ! -d "$SDK_DIR/platforms/android-35" ]; then
 
     "$SDK_DIR/cmdline-tools/latest/bin/sdkmanager" \
         --proxy=http --proxy_host=127.0.0.1 --proxy_port=$PROXY_PORT \
-        "platforms;android-35" "build-tools;35.0.0"
+        "platforms;android-36" "build-tools;36.0.0"
 fi
 
 # Check/Install Gradle

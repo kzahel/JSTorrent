@@ -9,12 +9,12 @@ plugins {
 
 android {
     namespace = "com.jstorrent.app"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "com.jstorrent.app"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 23
         versionName = "1.0.23"
 
@@ -107,6 +107,12 @@ android {
             // instead of throwing exceptions. Needed for android.util.Log calls in ViewModels.
             isReturnDefaultValues = true
         }
+    }
+
+    lint {
+        // Locale files are intentionally allowed to be partial; Android falls
+        // back to the complete English resources for untranslated strings.
+        disable += "MissingTranslation"
     }
 }
 

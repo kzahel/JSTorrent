@@ -6,6 +6,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performTextInput
+import androidx.compose.runtime.mutableStateOf
 import com.jstorrent.app.search.InstalledPluginRecord
 import com.jstorrent.app.search.RecommendedSearchPlugin
 import com.jstorrent.app.search.SearchDisplayResult
@@ -64,15 +65,19 @@ class SearchScreenTest {
     fun searchForm_callbacksFire() {
         var query = ""
         var searches = 0
+        val uiState = mutableStateOf(SearchUiState(enabledPlugins = emptyList()))
 
         composeTestRule.setContent {
             JSTorrentTheme {
                 SearchScreenContent(
-                    uiState = SearchUiState(enabledPlugins = emptyList()),
+                    uiState = uiState.value,
                     onNavigateBack = {},
                     onOpenTorrentDetails = {},
                     onManageSearchPlugins = {},
-                    onQueryChanged = { query = it },
+                    onQueryChanged = {
+                        query = it
+                        uiState.value = uiState.value.copy(query = it)
+                    },
                     onCategoryChanged = {},
                     onTogglePluginSelection = {},
                     onSelectAllPlugins = {},

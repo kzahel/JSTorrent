@@ -304,10 +304,6 @@ class JSTEngine:
         """Set maximum peers for a torrent."""
         return self._req("POST", f"/torrent/{tid}/settings", json={"maxPeers": max_peers})
 
-    def get_piece_availability(self, tid):
-        """Get piece availability map (which peers have which pieces)."""
-        return self._req("GET", f"/torrent/{tid}/availability")
-
     def force_disconnect_peer(self, tid, ip, port):
         """Force disconnect a specific peer."""
         return self._req("POST", f"/torrent/{tid}/disconnect-peer", json={"ip": ip, "port": port})

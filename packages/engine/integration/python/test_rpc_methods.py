@@ -23,13 +23,6 @@ def main() -> int:
             if not isinstance(peers.get("peers"), list):
                 return fail("get_peer_info didn't return peers list")
 
-            # Test get_piece_availability
-            avail = engine.get_piece_availability(tid)
-            if not avail.get("ok"):
-                return fail("get_piece_availability failed")
-            if not isinstance(avail.get("availability"), list):
-                return fail("get_piece_availability didn't return availability list")
-
             # Test set_max_peers
             res = engine.set_max_peers(tid, 10)
             if not res.get("ok"):

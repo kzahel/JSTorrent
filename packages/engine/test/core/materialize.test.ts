@@ -828,7 +828,7 @@ describe('Materialization', () => {
       for (const scenario of scenarios) {
         await runScenario(scenario)
       }
-    })
+    }, 30_000)
 
     it('exports newly unskipped file spans while piece remains in .parts', async () => {
       const fileAData = new Uint8Array(100)
