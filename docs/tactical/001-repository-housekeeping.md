@@ -209,12 +209,12 @@ stale paths.
 
 ### 7. Release Asset Integrity
 
-- [ ] Generate SHA-256 checksums for desktop release artifacts.
-- [ ] Attach the checksum manifest to the GitHub release.
-- [ ] Make supported public installer scripts download and verify the manifest
+- [x] Generate SHA-256 checksums for desktop release artifacts.
+- [x] Attach the checksum manifest to the GitHub release.
+- [x] Make supported public installer scripts download and verify the manifest
   before installing executable assets.
-- [ ] Fail closed on missing or mismatched checksums.
-- [ ] Add shell-level tests or fixtures for success, mismatch, and missing
+- [x] Fail closed on missing or mismatched checksums.
+- [x] Add shell-level tests or fixtures for success, mismatch, and missing
   checksum behavior.
 
 ### 8. Closeout
@@ -443,3 +443,35 @@ Validation:
   this execution record
 - workflow YAML parsing, documentation checks, formatting, and
   `git diff --check` passed
+
+### Release Asset Integrity
+
+The Tauri release finalizer now builds `SHA256SUMS` from the SHA-256 digests
+GitHub records as each asset is uploaded, fails if any asset lacks a valid
+digest, and attaches the manifest to the release. This avoids redownloading
+the full cross-platform asset set merely to recompute the same hashes. The
+release download table links the resulting manifest.
+
+Both supported Linux installers download the manifest first, require an entry
+for the exact selected asset, hash the downloaded bytes locally, and delete
+the download on a mismatch. Release 0.2.1 predates the new finalizer, so its
+GitHub-recorded asset digests are also published as a website-hosted bootstrap
+manifest. Later releases use their attached manifest. Missing both manifests,
+a missing entry, malformed digest, missing `sha256sum`, failed asset download,
+or mismatched digest aborts before any installation step.
+
+The shell test gate sources the exact verification function from each public
+installer and covers a successful download, tampered bytes, and an unavailable
+manifest, bootstrap fallback, or missing asset entry. The repository sanity
+workflow runs this test on every push and pull request.
+
+Validation:
+
+- all ten installer integrity cases passed across the two public installers
+- the bootstrap manifest matched all 17 digests currently recorded by GitHub
+  for desktop release 0.2.1
+- the rendered finalizer step generated the same manifest from live release
+  metadata and reached a mock upload successfully
+- the website build included the bootstrap manifest byte-for-byte
+- workflow YAML parsing, documentation checks, formatting, and shell syntax
+  checks passed

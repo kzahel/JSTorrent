@@ -379,6 +379,50 @@ jobs:
           print(f'latest.json valid: v{data[\"version\"]} with {len(platforms)} platform(s): {list(platforms.keys())}')
           "
 
+      - name: Publish release checksums
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          RELEASE_JSON="$(mktemp)"
+          ASSET_DIR="$(mktemp -d)"
+          CHECKSUMS_FILE="${ASSET_DIR}/SHA256SUMS"
+          trap 'rm -f "$RELEASE_JSON"; rm -rf "$ASSET_DIR"' EXIT
+
+          gh api \
+            "repos/${GITHUB_REPOSITORY}/releases/tags/${TAG}" \
+            > "$RELEASE_JSON"
+
+          python3 - "$RELEASE_JSON" "$CHECKSUMS_FILE" <<'PY'
+          import json
+          import re
+          import sys
+
+          release_path, checksums_path = sys.argv[1:]
+          with open(release_path, encoding="utf-8") as release_file:
+              assets = json.load(release_file)["assets"]
+
+          lines = []
+          for asset in assets:
+              name = asset["name"]
+              if name == "SHA256SUMS":
+                  continue
+              digest = asset.get("digest", "")
+              if not re.fullmatch(r"sha256:[0-9a-f]{64}", digest):
+                  raise SystemExit(f"{name}: missing or invalid SHA-256 digest")
+              if any(character.isspace() for character in name):
+                  raise SystemExit(f"{name!r}: whitespace is not supported in asset names")
+              lines.append(f"{digest.removeprefix('sha256:')}  {name}")
+
+          if not lines:
+              raise SystemExit("no release assets were available for checksumming")
+
+          with open(checksums_path, "w", encoding="utf-8") as checksums_file:
+              checksums_file.write("\n".join(sorted(lines)) + "\n")
+          PY
+
+          gh release upload "$TAG" "$CHECKSUMS_FILE" --clobber
+
       - name: Update release body with download table
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -415,6 +459,8 @@ jobs:
             echo '```'
             echo ""
             echo "Standalone binaries: [x86_64](${BASE}/jstorrent-io-daemon-x86_64-unknown-linux-gnu) · [ARM64](${BASE}/jstorrent-io-daemon-aarch64-unknown-linux-gnu)"
+            echo ""
+            echo "[SHA-256 checksums](${BASE}/SHA256SUMS)"
           } > /tmp/release-body.md
 
           gh release edit "$TAG" --notes-file /tmp/release-body.md

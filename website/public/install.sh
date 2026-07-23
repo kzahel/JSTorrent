@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 # JSTorrent Desktop App installer for Linux
 # Usage: curl -fsSL https://jstorrent.com/install.sh | bash
@@ -13,8 +13,10 @@ set -e
 # Options: --deb (Debian/Ubuntu, requires sudo, no auto-update)
 #          --rpm (Fedora/RHEL, requires sudo, no auto-update)
 
-FALLBACK_TAG="v0.1.17"
+FALLBACK_TAG="v0.2.1"
 MANIFEST_NAME="com.jstorrent.native"
+CHECKSUMS_NAME="SHA256SUMS"
+CHECKSUMS_FALLBACK_BASE_URL="${JSTORRENT_CHECKSUMS_FALLBACK_BASE_URL:-https://jstorrent.com/checksums}"
 
 # Colors (disabled if not a terminal)
 if [ -t 1 ]; then
@@ -30,6 +32,57 @@ fi
 info()  { echo -e "${GREEN}==>${NC} ${BOLD}$*${NC}"; }
 warn()  { echo -e "${YELLOW}warning:${NC} $*"; }
 error() { echo -e "${RED}error:${NC} $*" >&2; }
+
+download_verified_asset() {
+    local asset_name="$1"
+    local destination="$2"
+    local checksums_file="${TMP_DIR}/${CHECKSUMS_NAME}"
+
+    if ! command -v sha256sum >/dev/null 2>&1; then
+        error "sha256sum is required to verify release downloads."
+        return 1
+    fi
+
+    if [ ! -s "$checksums_file" ]; then
+        info "Downloading checksum manifest..."
+        if ! curl -fSL --progress-bar "${BASE_URL}/${CHECKSUMS_NAME}" -o "$checksums_file"; then
+            local fallback_url="${CHECKSUMS_FALLBACK_BASE_URL}/tauri-app-${TAG}-${CHECKSUMS_NAME}"
+            warn "Release checksum manifest is unavailable; checking the bootstrap manifest."
+            if ! curl -fSL --progress-bar "$fallback_url" -o "$checksums_file"; then
+                error "Checksum manifests are unavailable; refusing an unverified install."
+                return 1
+            fi
+        fi
+    fi
+
+    local expected
+    expected=$(awk -v name="$asset_name" '$2 == name { print $1; exit }' "$checksums_file")
+    if [[ ! "$expected" =~ ^[[:xdigit:]]{64}$ ]]; then
+        error "No valid checksum was published for ${asset_name}."
+        return 1
+    fi
+
+    info "Downloading ${asset_name}..."
+    if ! curl -fSL --progress-bar "${BASE_URL}/${asset_name}" -o "$destination"; then
+        rm -f "$destination"
+        error "Failed to download ${asset_name}."
+        return 1
+    fi
+
+    local actual
+    actual=$(sha256sum "$destination" | awk '{ print $1 }')
+    if [ "${actual,,}" != "${expected,,}" ]; then
+        rm -f "$destination"
+        error "Checksum verification failed for ${asset_name}; refusing to install it."
+        return 1
+    fi
+
+    info "Verified ${asset_name}."
+}
+
+if [ "${JSTORRENT_INSTALLER_LIB_ONLY:-}" = "1" ]; then
+    return 0 2>/dev/null || exit 0
+fi
 
 # --- OS check ---
 if [[ "$(uname -s)" != "Linux" ]]; then
@@ -156,9 +209,7 @@ MANIFEST
 
 install_deb() {
     local deb_file="JSTorrent_${VERSION}_${DEB_ARCH}.deb"
-    info "Downloading ${deb_file}..."
-    if ! curl -fSL --progress-bar "${BASE_URL}/${deb_file}" -o "${TMP_DIR}/${deb_file}"; then
-        error "Failed to download ${deb_file}"
+    if ! download_verified_asset "$deb_file" "${TMP_DIR}/${deb_file}"; then
         exit 1
     fi
 
@@ -176,9 +227,7 @@ install_deb() {
 
 install_rpm() {
     local rpm_file="JSTorrent-${VERSION}-1.${RPM_ARCH}.rpm"
-    info "Downloading ${rpm_file}..."
-    if ! curl -fSL --progress-bar "${BASE_URL}/${rpm_file}" -o "${TMP_DIR}/${rpm_file}"; then
-        error "Failed to download ${rpm_file}"
+    if ! download_verified_asset "$rpm_file" "${TMP_DIR}/${rpm_file}"; then
         exit 1
     fi
 
@@ -200,9 +249,7 @@ install_appimage() {
     local install_path="${install_dir}/JSTorrent.AppImage"
     local lib_dir="$HOME/.local/lib/jstorrent"
 
-    info "Downloading ${appimage_file}..."
-    if ! curl -fSL --progress-bar "${BASE_URL}/${appimage_file}" -o "${TMP_DIR}/${appimage_file}"; then
-        error "Failed to download ${appimage_file}"
+    if ! download_verified_asset "$appimage_file" "${TMP_DIR}/${appimage_file}"; then
         exit 1
     fi
 

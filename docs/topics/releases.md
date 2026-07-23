@@ -99,7 +99,13 @@ recovery path, not a required second build after successful CI.
 The script updates the Tauri configuration, JavaScript package, Rust workspace
 version, lockfile, and changelog. CI builds platform installers, signs
 configured targets, validates `latest.json`, and updates the GitHub release
-download table. Existing applications consume the updater metadata.
+download table. The finalizer also publishes `SHA256SUMS` from GitHub's
+recorded asset digests. The Linux desktop and Crostini installers hash the
+downloaded asset locally and refuse to install when the manifests are missing,
+do not name the selected asset, or do not match. A website-hosted manifest
+bootstraps release 0.2.1, which predates the release finalizer; subsequent
+releases carry their manifest as a release asset. Existing applications
+consume the updater metadata.
 
 ## iOS
 

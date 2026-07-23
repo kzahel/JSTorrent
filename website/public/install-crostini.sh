@@ -1,5 +1,5 @@
 #!/bin/bash
-set -e
+set -euo pipefail
 
 # JSTorrent I/O Daemon installer for ChromeOS Crostini
 # Usage: curl -fsSL https://jstorrent.com/install-crostini.sh | bash
@@ -10,12 +10,14 @@ set -e
 #
 # Options:
 #   --uninstall    Remove the daemon, service, and config
-#   --version X    Install a specific version (e.g., --version 0.1.28)
+#   --version X    Install a specific version (e.g., --version 0.2.1)
 
-FALLBACK_TAG="v0.1.28"
+FALLBACK_TAG="v0.2.1"
 REPO="kzahel/jstorrent"
 SERVICE_NAME="jstorrent-io"
 BINARY_NAME="jstorrent-io-daemon"
+CHECKSUMS_NAME="SHA256SUMS"
+CHECKSUMS_FALLBACK_BASE_URL="${JSTORRENT_CHECKSUMS_FALLBACK_BASE_URL:-https://jstorrent.com/checksums}"
 INSTALL_DIR="$HOME/.local/bin"
 SERVICE_DIR="$HOME/.config/systemd/user"
 CONFIG_DIR="$HOME/.config/jstorrent-standalone"
@@ -35,6 +37,57 @@ fi
 info()  { echo -e "${GREEN}==>${NC} ${BOLD}$*${NC}"; }
 warn()  { echo -e "${YELLOW}warning:${NC} $*"; }
 error() { echo -e "${RED}error:${NC} $*" >&2; }
+
+download_verified_asset() {
+    local asset_name="$1"
+    local destination="$2"
+    local checksums_file="${TMP_DIR}/${CHECKSUMS_NAME}"
+
+    if ! command -v sha256sum >/dev/null 2>&1; then
+        error "sha256sum is required to verify release downloads."
+        return 1
+    fi
+
+    if [ ! -s "$checksums_file" ]; then
+        info "Downloading checksum manifest..."
+        if ! curl -fSL --progress-bar "${BASE_URL}/${CHECKSUMS_NAME}" -o "$checksums_file"; then
+            local fallback_url="${CHECKSUMS_FALLBACK_BASE_URL}/tauri-app-${TAG}-${CHECKSUMS_NAME}"
+            warn "Release checksum manifest is unavailable; checking the bootstrap manifest."
+            if ! curl -fSL --progress-bar "$fallback_url" -o "$checksums_file"; then
+                error "Checksum manifests are unavailable; refusing an unverified install."
+                return 1
+            fi
+        fi
+    fi
+
+    local expected
+    expected=$(awk -v name="$asset_name" '$2 == name { print $1; exit }' "$checksums_file")
+    if [[ ! "$expected" =~ ^[[:xdigit:]]{64}$ ]]; then
+        error "No valid checksum was published for ${asset_name}."
+        return 1
+    fi
+
+    info "Downloading ${asset_name}..."
+    if ! curl -fSL --progress-bar "${BASE_URL}/${asset_name}" -o "$destination"; then
+        rm -f "$destination"
+        error "Failed to download ${asset_name}."
+        return 1
+    fi
+
+    local actual
+    actual=$(sha256sum "$destination" | awk '{ print $1 }')
+    if [ "${actual,,}" != "${expected,,}" ]; then
+        rm -f "$destination"
+        error "Checksum verification failed for ${asset_name}; refusing to install it."
+        return 1
+    fi
+
+    info "Verified ${asset_name}."
+}
+
+if [ "${JSTORRENT_INSTALLER_LIB_ONLY:-}" = "1" ]; then
+    return 0 2>/dev/null || exit 0
+fi
 
 # --- Uninstall ---
 uninstall() {
@@ -114,19 +167,18 @@ trap 'rm -rf "$TMP_DIR"' EXIT
 ASSET_NAME="${BINARY_NAME}-${TRIPLE}"
 DOWNLOAD_URL="${BASE_URL}/${ASSET_NAME}"
 
-info "Downloading ${ASSET_NAME}..."
-if ! curl -fSL --progress-bar "$DOWNLOAD_URL" -o "${TMP_DIR}/${BINARY_NAME}"; then
-    error "Failed to download ${ASSET_NAME}"
+if ! download_verified_asset "$ASSET_NAME" "${TMP_DIR}/${ASSET_NAME}"; then
+    error "Unable to obtain a verified ${ASSET_NAME}."
     echo "  URL: $DOWNLOAD_URL"
     echo ""
     echo "  This may mean the binary hasn't been published for this version yet."
-    echo "  Try specifying a version: curl -fsSL https://jstorrent.com/install-crostini.sh | bash -s -- --version 0.1.28"
+    echo "  Try specifying a version: curl -fsSL https://jstorrent.com/install-crostini.sh | bash -s -- --version 0.2.1"
     exit 1
 fi
 
 # --- Install binary ---
 mkdir -p "$INSTALL_DIR"
-mv "${TMP_DIR}/${BINARY_NAME}" "${INSTALL_DIR}/${BINARY_NAME}"
+mv "${TMP_DIR}/${ASSET_NAME}" "${INSTALL_DIR}/${BINARY_NAME}"
 chmod +x "${INSTALL_DIR}/${BINARY_NAME}"
 info "Installed to ${INSTALL_DIR}/${BINARY_NAME}"
 

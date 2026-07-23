@@ -8,6 +8,7 @@ root unless their usage output says otherwise.
 - `check.sh`: the primary local lint, type, documentation, and test gate
 - `check-root-deps.sh`: ensures runtime dependencies stay with their workspace
 - `check-docs.mjs`: active documentation validation
+- `test-release-integrity.sh`: checksum verification tests for public installers
 - `e2e-companion-smoke.sh`: extension-to-Android companion download smoke test
 - `setup-android-test-env.sh`: Android test dependencies
 - `test-dht-*.ts` / `.cjs`: targeted DHT diagnostics
