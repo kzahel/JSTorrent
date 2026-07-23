@@ -228,7 +228,7 @@ fn kv_get(host: &mut HostProcess, key: &str) -> serde_json::Value {
 // Assertion / utility helpers
 // ---------------------------------------------------------------------------
 
-/// Validate a DaemonInfo response and return (profile_id, daemon_port, daemon_token).
+/// Validate a `DaemonInfo` response and return (`profile_id`, `daemon_port`, `daemon_token`).
 fn assert_daemon_info(response: &serde_json::Value) -> (String, u16, String) {
     assert_eq!(response["ok"], true, "response must be ok: {response}");
     assert_eq!(
@@ -280,7 +280,7 @@ fn read_rpc_info(config_dir: &Path) -> serde_json::Value {
 // Tests
 // ===========================================================================
 
-/// profile_id: None → creates a new profile with a valid UUID.
+/// `profile_id`: None → creates a new profile with a valid UUID.
 #[test]
 fn test_fresh_profile_creation() {
     assert_daemon_binary_exists();
@@ -314,7 +314,7 @@ fn test_fresh_profile_creation() {
     shutdown_host(host);
 }
 
-/// Passing an explicit profile_id from a previous session → reuses the same profile.
+/// Passing an explicit `profile_id` from a previous session → reuses the same profile.
 #[test]
 fn test_profile_reuse_by_profile_id() {
     assert_daemon_binary_exists();
@@ -341,8 +341,8 @@ fn test_profile_reuse_by_profile_id() {
     shutdown_host(host_b);
 }
 
-/// Two hosts with no profile_id → each gets a separate new profile,
-/// even with the same extension_id.
+/// Two hosts with no `profile_id` → each gets a separate new profile,
+/// even with the same `extension_id`.
 #[test]
 fn test_no_profile_id_always_creates_new() {
     assert_daemon_binary_exists();
@@ -367,7 +367,7 @@ fn test_no_profile_id_always_creates_new() {
     shutdown_host(host_b);
 }
 
-/// Host A active with profile. Host B sends same profile_id → ProfileInUse.
+/// Host A active with profile. Host B sends same `profile_id` → `ProfileInUse`.
 #[test]
 #[allow(non_snake_case)]
 fn conformance__handshake__profile_in_use_is_reported__impl__rust() {
@@ -434,7 +434,7 @@ fn conformance__handshake__profile_in_use_is_reported__impl__rust() {
     shutdown_host(host_a);
 }
 
-/// Host A crashes (stale entry). Host B passes A's profile_id → takes over.
+/// Host A crashes (stale entry). Host B passes A's `profile_id` → takes over.
 #[test]
 fn test_stale_process_takeover() {
     assert_daemon_binary_exists();
@@ -469,7 +469,7 @@ fn test_stale_process_takeover() {
     shutdown_host(host_b);
 }
 
-/// Host B sends TakeOver with A's profile_id → kills A, takes profile.
+/// Host B sends `TakeOver` with A's `profile_id` → kills A, takes profile.
 #[test]
 #[allow(non_snake_case)]
 fn conformance__profiles__takeover_reuses_profile__impl__rust() {
@@ -595,7 +595,7 @@ fn conformance__roots__delete_download_root_returns_root_removed__impl__rust() {
     shutdown_host(host);
 }
 
-/// Two hosts both send profile_id: None → two different profiles, two daemons.
+/// Two hosts both send `profile_id`: None → two different profiles, two daemons.
 #[test]
 fn test_multiple_independent_profiles() {
     assert_daemon_binary_exists();
@@ -638,7 +638,7 @@ fn test_multiple_independent_profiles() {
     shutdown_host(host_b);
 }
 
-/// Explicit bad profile_id → auto-creates a new profile (self-recovery).
+/// Explicit bad `profile_id` → auto-creates a new profile (self-recovery).
 #[test]
 #[allow(non_snake_case)]
 fn conformance__handshake__invalid_profile_id_creates_new_profile__impl__rust() {
@@ -725,8 +725,8 @@ fn conformance__profiles__kv_isolated_per_profile__impl__rust() {
 // Magnet/Torrent Routing — Phase 1 Tests
 // ===========================================================================
 
-/// Fresh config dir → handshake → rpc-info.json has non-empty add_token.
-/// Restart host → same add_token persisted.
+/// Fresh config dir → handshake → rpc-info.json has non-empty `add_token`.
+/// Restart host → same `add_token` persisted.
 #[test]
 fn test_add_token_generated() {
     assert_daemon_binary_exists();
@@ -766,7 +766,7 @@ fn test_add_token_generated() {
     shutdown_host(host_b);
 }
 
-/// Two hosts with different profiles in same config dir → both see same add_token.
+/// Two hosts with different profiles in same config dir → both see same `add_token`.
 #[test]
 fn test_add_token_stable_across_profiles() {
     assert_daemon_binary_exists();
@@ -802,8 +802,8 @@ fn test_add_token_stable_across_profiles() {
     shutdown_host(host_b);
 }
 
-/// Handshake with client_type: "extension" → profile has client_types_used: ["extension"].
-/// Reconnect with client_type: "tauri" → ["extension", "tauri"]. No dupes on re-handshake.
+/// Handshake with `client_type`: "extension" → profile records the extension.
+/// Reconnect with `client_type`: "tauri" → both types, without duplicates.
 #[test]
 fn test_client_types_used_accumulated() {
     assert_daemon_binary_exists();
@@ -901,8 +901,8 @@ fn test_client_types_used_accumulated() {
     shutdown_host(host_c);
 }
 
-/// Manually set desktop_ever_used: true in rpc-info.json for a profile →
-/// handshake with that profile_id → field still true after handshake updates.
+/// Manually set `desktop_ever_used`: true in rpc-info.json for a profile →
+/// handshake with that `profile_id` → field still true after handshake updates.
 #[test]
 fn test_desktop_ever_used_preserved() {
     assert_daemon_binary_exists();
@@ -921,9 +921,8 @@ fn test_desktop_ever_used_preserved() {
         .iter()
         .find(|p| p["profile_id"].as_str() == Some(&profile_id))
         .expect("should find profile");
-    assert_eq!(
-        profile["desktop_ever_used"].as_bool().unwrap_or(false),
-        false,
+    assert!(
+        !profile["desktop_ever_used"].as_bool().unwrap_or(false),
         "desktop_ever_used should start as false"
     );
 
@@ -957,16 +956,15 @@ fn test_desktop_ever_used_preserved() {
         .iter()
         .find(|p| p["profile_id"].as_str() == Some(&profile_id))
         .expect("should find profile after reconnect");
-    assert_eq!(
+    assert!(
         profile2["desktop_ever_used"].as_bool().unwrap_or(false),
-        true,
         "desktop_ever_used should be preserved across handshakes"
     );
 
     shutdown_host(host_b);
 }
 
-/// Write a test .torrent file → send ReadTorrentFile → get back TorrentFileContents.
+/// Write a test .torrent file → send `ReadTorrentFile` → get back `TorrentFileContents`.
 /// Also test rejection for non-.torrent paths.
 #[test]
 #[allow(non_snake_case)]
@@ -1016,7 +1014,7 @@ fn conformance__torrent__read_torrent_file_returns_contents__impl__rust() {
     shutdown_host(host);
 }
 
-/// Send ReadTorrentFile for a nonexistent path → error response.
+/// Send `ReadTorrentFile` for a nonexistent path → error response.
 #[test]
 fn test_read_torrent_file_not_found() {
     assert_daemon_binary_exists();

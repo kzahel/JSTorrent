@@ -5,8 +5,8 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
 use crate::kv_store::KvStore;
 
-const CHECK_TIMEOUT: Duration = Duration::from_secs(60);
-const INSTALL_TIMEOUT: Duration = Duration::from_secs(300);
+const CHECK_TIMEOUT: Duration = Duration::from_mins(1);
+const INSTALL_TIMEOUT: Duration = Duration::from_mins(5);
 const AUTO_CHECK_INTERVAL_SECS: u64 = 24 * 60 * 60; // 24 hours
 const KV_LAST_CHECK_KEY: &str = "update:lastCheckTime";
 const RESULT_FILENAME: &str = "update-check-result.json";

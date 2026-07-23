@@ -175,7 +175,7 @@ fn register_windows_browsers(
     Ok(count)
 }
 
-/// Copy the sidecar binary from the AppImage FUSE mount to `~/.local/lib/jstorrent/`.
+/// Copy the sidecar binary from the `AppImage` FUSE mount to `~/.local/lib/jstorrent/`.
 /// Returns the stable destination path.
 #[cfg(target_os = "linux")]
 fn copy_sidecar_for_appimage(fuse_path: &std::path::Path) -> Result<std::path::PathBuf, String> {

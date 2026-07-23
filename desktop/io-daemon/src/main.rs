@@ -426,7 +426,7 @@ fn build_cors_layer(extension_id: Option<&str>, allow_any: bool) -> CorsLayer {
                 Method::OPTIONS,
             ])
             .allow_headers(allowed_headers)
-            .max_age(Duration::from_secs(86400));
+            .max_age(Duration::from_hours(24));
     }
 
     let mut allowed_origins: Vec<axum::http::HeaderValue> = vec![];
@@ -488,7 +488,7 @@ fn build_cors_layer(extension_id: Option<&str>, allow_any: bool) -> CorsLayer {
                 Method::OPTIONS,
             ])
             .allow_headers(allowed_headers)
-            .max_age(Duration::from_secs(86400))
+            .max_age(Duration::from_hours(24))
     } else {
         CorsLayer::new()
             .allow_origin(allowed_origins)
@@ -500,7 +500,7 @@ fn build_cors_layer(extension_id: Option<&str>, allow_any: bool) -> CorsLayer {
                 Method::OPTIONS,
             ])
             .allow_headers(allowed_headers)
-            .max_age(Duration::from_secs(86400))
+            .max_age(Duration::from_hours(24))
     }
 }
 

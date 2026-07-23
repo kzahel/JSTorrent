@@ -4,8 +4,10 @@ use std::io::{Read, Write};
 use std::path::PathBuf;
 use std::process::{ChildStdin, ChildStdout};
 use std::sync::{Arc, Mutex};
+#[cfg(target_os = "macos")]
+use tauri::menu::MenuItemKind;
 use tauri::{
-    menu::{CheckMenuItem, Menu, MenuItem, MenuItemKind, PredefinedMenuItem, SubmenuBuilder},
+    menu::{CheckMenuItem, Menu, MenuItem, PredefinedMenuItem, SubmenuBuilder},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     Emitter, Manager,
 };
@@ -489,7 +491,7 @@ fn auto_route_decision(rpc_info: &RpcInfo) -> bool {
         if active.is_empty() {
             active = profiles.iter().collect();
         }
-        active.sort_by(|a, b| b.last_used.cmp(&a.last_used));
+        active.sort_by_key(|profile| std::cmp::Reverse(profile.last_used));
         if let Some(most_recent) = active.first() {
             if let Some(ct) = &most_recent.client_type {
                 return ct == "extension";
@@ -890,6 +892,7 @@ fn handle_menu_event(app: &tauri::AppHandle, event_id: &str) {
             let state = app.state::<Mutex<Settings>>();
             let mut s = state.lock().unwrap();
             s.run_in_background = !s.run_in_background;
+            #[cfg(target_os = "macos")]
             let checked = s.run_in_background;
             save_settings(app, &s);
             drop(s);
@@ -1148,11 +1151,11 @@ pub fn run() {
                     settings.run_in_background,
                     None::<&str>,
                 )?;
-                let mut builder = SubmenuBuilder::new(app, "Settings")
+                let builder = SubmenuBuilder::new(app, "Settings")
                     .item(&autostart_i)
                     .item(&background_i);
                 #[cfg(target_os = "macos")]
-                {
+                let builder = {
                     let show_in_menu_bar_i = CheckMenuItem::with_id(
                         app,
                         "show-in-menu-bar",
@@ -1161,8 +1164,8 @@ pub fn run() {
                         settings.show_in_menu_bar,
                         None::<&str>,
                     )?;
-                    builder = builder.item(&show_in_menu_bar_i);
-                }
+                    builder.item(&show_in_menu_bar_i)
+                };
                 Ok(builder.build()?)
             };
 
@@ -1499,19 +1502,23 @@ pub fn run() {
 
     // Keep app alive when all windows are hidden (user closes window -> hide, not exit).
     // Explicit quit via tray menu calls app.exit(0), which sets code = Some(0).
-    app.run(|app_handle, event| match event {
-        tauri::RunEvent::ExitRequested { api, code, .. } => {
-            // Keep app alive for tray when windows close.
-            // Only app.exit(0) from Quit menu (code=Some(0)) actually exits.
-            if code.is_none() {
-                api.prevent_exit();
+    app.run(|app_handle, event| {
+        #[cfg(not(target_os = "macos"))]
+        let _ = app_handle;
+
+        match event {
+            tauri::RunEvent::ExitRequested { api, code, .. }
+                // Keep app alive for tray when windows close.
+                // Only app.exit(0) from Quit menu (code=Some(0)) actually exits.
+                if code.is_none() => {
+                    api.prevent_exit();
+                }
+            #[cfg(target_os = "macos")]
+            tauri::RunEvent::Reopen { .. } => {
+                show_main_window(app_handle);
             }
+            _ => {}
         }
-        #[cfg(target_os = "macos")]
-        tauri::RunEvent::Reopen { .. } => {
-            show_main_window(app_handle);
-        }
-        _ => {}
     });
 }
 

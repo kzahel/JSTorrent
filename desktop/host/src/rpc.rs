@@ -427,7 +427,7 @@ mod tests {
         DownloadRoot {
             key: key.to_string(),
             path: path.to_string(),
-            display_name: format!("Test Root {}", key),
+            display_name: format!("Test Root {key}"),
             removable: true,
             last_stat_ok: true,
             last_checked: 0,
@@ -577,7 +577,7 @@ mod tests {
         std::env::remove_var("JSTORRENT_CONFIG_DIR");
     }
 
-    /// Test: Writing with same profile_id updates same entry
+    /// Test: Writing with same `profile_id` updates same entry
     #[test]
     #[serial]
     fn test_profile_match_by_id() {
@@ -604,7 +604,7 @@ mod tests {
         std::env::remove_var("JSTORRENT_CONFIG_DIR");
     }
 
-    /// Test: Writing with different profile_id creates new entry
+    /// Test: Writing with different `profile_id` creates new entry
     #[test]
     #[serial]
     fn test_profile_create_new() {
@@ -626,7 +626,7 @@ mod tests {
         std::env::remove_var("JSTORRENT_CONFIG_DIR");
     }
 
-    /// Test: display_name and created survive updates
+    /// Test: `display_name` and created survive updates
     #[test]
     #[serial]
     fn test_profile_metadata_preserved() {

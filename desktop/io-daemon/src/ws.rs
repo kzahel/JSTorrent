@@ -689,8 +689,7 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>, mode: Connection
                         tokio::spawn(async move {
                             match TcpListener::bind(&addr).await {
                                 Ok(listener) => {
-                                    let bound_port =
-                                        listener.local_addr().map(|a| a.port()).unwrap_or(0);
+                                    let bound_port = listener.local_addr().map_or(0, |a| a.port());
 
                                     // Send TCP_LISTEN_RESULT success
                                     // Payload: serverId(4), status(1), boundPort(2), errno(4)
@@ -882,8 +881,7 @@ async fn handle_socket(socket: WebSocket, state: Arc<AppState>, mode: Connection
 
                             match bind_result {
                                 Ok(socket) => {
-                                    let local_port =
-                                        socket.local_addr().map(|a| a.port()).unwrap_or(0);
+                                    let local_port = socket.local_addr().map_or(0, |a| a.port());
                                     let socket = Arc::new(socket);
                                     manager
                                         .lock()

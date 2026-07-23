@@ -119,12 +119,12 @@ cd android
 
 ### 3. Rust Security Baseline
 
-- [ ] Apply compatible lockfile updates for vulnerable transitive packages.
-- [ ] Update Tauri and plugins where compatible releases resolve updater or
+- [x] Apply compatible lockfile updates for vulnerable transitive packages.
+- [x] Update Tauri and plugins where compatible releases resolve updater or
   runtime advisories.
-- [ ] Upgrade the desktop host's old direct `reqwest 0.11` dependency and adapt
+- [x] Upgrade the desktop host's old direct `reqwest 0.11` dependency and adapt
   code only where the new API requires it.
-- [ ] Re-run `cargo audit`, classify any residual platform/build-only paths,
+- [x] Re-run `cargo audit`, classify any residual platform/build-only paths,
   and record deliberate deferrals.
 
 Validation:
@@ -171,7 +171,7 @@ integration Python tests used by the root workspace.
 - [x] Reassess the Node minimum advertised by published packages and test every
   advertised supported major.
 - [x] Upgrade pnpm after Node 24 is active and validate the resulting lockfile.
-- [ ] Pin a Rust toolchain for release reproducibility.
+- [x] Pin a Rust toolchain for release reproducibility.
 - [ ] Update maintained GitHub Actions to current supported majors.
 - [ ] Use `pnpm install --frozen-lockfile` consistently in CI.
 - [ ] Replace direct uv installer piping with the maintained setup action.
@@ -346,3 +346,29 @@ The build still reports existing Gradle 9 migration warnings, chiefly the
 quickjs module's deprecated `Project.exec` use. That infrastructure migration
 is separate from the network dependency update and does not affect the current
 Gradle 8.13 gate.
+
+### Rust Security Update
+
+The desktop workspace is pinned to Rust 1.97.0. Compatible lockfile updates
+move Tauri to 2.11.5, refresh its updater and runtime chain, and remove the
+vulnerable archive, XML, time, TLS, and concurrency versions from the baseline
+audit. The native host now uses `reqwest` 0.13, eliminating its separate
+`rustls` 0.21 and `rustls-webpki` 0.101 dependency path.
+
+The Rust 1.97 clippy pass also exposed warnings that the former floating
+toolchain had not made reproducible. Mechanical fixes were applied without
+changing the protocol or daemon behavior.
+
+Validation:
+
+- `cargo fmt --all -- --check` passed
+- `cargo clippy --workspace --all-targets -- -D warnings` passed
+- `cargo test --workspace` passed, including Tauri, native-messaging, profile,
+  and daemon tests
+- `cargo audit` reported no vulnerabilities
+
+The audit retains 18 warning-only records. Ten are the unmaintained GTK3
+bindings used by Tauri's current Linux WebKit stack; seven are unmaintained
+macro/Unicode transitive crates; and one is the known `glib` iterator
+soundness warning. They have no compatible replacement in the current Tauri
+2 Linux graph and remain visible rather than being added to an ignore list.

@@ -1056,7 +1056,7 @@ mod tests {
         })
     }
 
-    /// Test helper: compute SHA1 hash the same way as write_file_v2
+    /// Test helper: compute SHA1 hash the same way as `write_file_v2`
     fn compute_sha1_hex(data: &[u8]) -> String {
         let mut hasher = Sha1::new();
         hasher.update(data);

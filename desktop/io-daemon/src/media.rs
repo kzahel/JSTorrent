@@ -930,7 +930,7 @@ mod tests {
                         *released = true;
                         Some(gate.clone())
                     }
-                    _ => None,
+                    BridgeBehavior::Error(_) => None,
                 }
             };
             if let Some(gate) = gate {
@@ -969,7 +969,7 @@ mod tests {
                     BridgeBehavior::Error(status) => {
                         return Err(TorrentHttpStreamError::new(*status, status_label(*status)));
                     }
-                    _ => None,
+                    BridgeBehavior::Blocking { .. } => None,
                 }
             };
 

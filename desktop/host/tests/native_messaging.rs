@@ -100,15 +100,16 @@ fn conformance__handshake__daemon_info_is_returned__impl__rust() {
         let mut stderr_buf = Vec::new();
         let _ = stderr.read_to_end(&mut stderr_buf);
         let stderr_str = String::from_utf8_lossy(&stderr_buf);
-        let daemon_meta = std::fs::metadata(&daemon_bin)
-            .map(|m| {
+        let daemon_meta = std::fs::metadata(&daemon_bin).map_or_else(
+            |e| format!("metadata error: {e}"),
+            |m| {
                 #[cfg(unix)]
                 let perms = format!("{:o}", m.permissions().mode());
                 #[cfg(not(unix))]
                 let perms = format!("{:?}", m.permissions());
                 format!("size={}, permissions={perms}", m.len())
-            })
-            .unwrap_or_else(|e| format!("metadata error: {e}"));
+            },
+        );
         panic!(
             "handshake must succeed: {response}\n\
              host_bin: {host_bin}\n\
@@ -214,19 +215,25 @@ fn conformance__handshake__capabilities_are_reported__impl__rust() {
     assert_eq!(
         capabilities
             .get("roots_manageable")
-            .and_then(|v| v.as_bool()),
+            .and_then(serde_json::Value::as_bool),
         Some(true)
     );
     assert_eq!(
-        capabilities.get("lan_share_urls").and_then(|v| v.as_bool()),
+        capabilities
+            .get("lan_share_urls")
+            .and_then(serde_json::Value::as_bool),
         Some(true)
     );
     assert_eq!(
-        capabilities.get("free_space").and_then(|v| v.as_bool()),
+        capabilities
+            .get("free_space")
+            .and_then(serde_json::Value::as_bool),
         Some(true)
     );
     assert_eq!(
-        capabilities.get("write_atomic").and_then(|v| v.as_bool()),
+        capabilities
+            .get("write_atomic")
+            .and_then(serde_json::Value::as_bool),
         Some(true)
     );
 

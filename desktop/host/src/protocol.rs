@@ -145,6 +145,7 @@ pub struct ProfileListEntry {
 }
 
 #[derive(Debug, Serialize, Deserialize)]
+#[allow(clippy::struct_excessive_bools)]
 pub struct DaemonCapabilities {
     pub roots_manageable: bool,
     pub lan_share_urls: bool,
