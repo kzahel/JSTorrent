@@ -4,6 +4,20 @@
 
 For cross-project context (how this project relates to Transistor, QuickJitJS, Tilefun, etc.), see `~/code/dotfiles/projects/README.md`.
 
+## Living Topic Documentation
+
+Focused, living records of continuing concerns live under `docs/topics/`.
+Before changing a continuing concern, look for a relevant topic and read it.
+Update that topic when the work changes its status, decisions, evidence,
+validation, gaps, or recommended direction. Create a focused sibling topic when
+continuity would be valuable and the concern can evolve independently.
+
+Adopt this convention incrementally: do not reorganize existing documentation
+solely for consistency, and do not create a topic for every small standalone
+change. See `docs/topics/README.md` for document roles and topic shape. When a
+commit materially advances a documented topic, use its slug in a
+`Topic: <slug>` commit-message trailer where practical.
+
 ## Environment Setup
 
 Before running commands that require Java, Rust, or other development tools, source the shell profile:

@@ -1,8 +1,12 @@
-# Android API 37 Local Network Permission Plan
+# Android API 37 Local Network Permission
 
-- **Status:** Deferred until JSTorrent begins targeting Android 17 / API 37
-- **Recorded:** 2026-07-23
-- **Current Android target:** API 36
+Topic: `android-api-37-local-network-permission`
+
+Status: **deferred until JSTorrent begins targeting Android 17 / API 37**.
+
+Last reconciled: **2026-07-23**.
+
+Current Android target: **API 36**.
 
 ## Decision
 
