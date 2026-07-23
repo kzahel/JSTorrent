@@ -27,7 +27,6 @@ file handling now live in the Tauri application and native host.
 
 - Rust stable
 - Node.js and pnpm
-- Python 3.10+ and `uv` for Python tools
 - platform dependencies required by Tauri
 
 Install JavaScript dependencies from the repository root:

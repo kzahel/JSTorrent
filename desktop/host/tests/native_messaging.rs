@@ -1,5 +1,5 @@
 //! Integration test for the native messaging protocol between
-//! the Tauri backend (or any host) and jstorrent-host (system-bridge).
+//! the Tauri backend (or any host) and jstorrent-host (native host).
 //!
 //! Prerequisites: both binaries must be built:
 //!   `cargo build -p jstorrent-host -p jstorrent-io-daemon`
@@ -170,15 +170,15 @@ fn conformance__handshake__daemon_info_is_returned__impl__rust() {
     // Response may be ok or error depending on implementation; we just validate framing works
     eprintln!("Delete response: ok={}", delete_response["ok"]);
 
-    // 4. Close stdin -> system-bridge should exit cleanly (EOF shutdown)
+    // 4. Close stdin -> native host should exit cleanly (EOF shutdown)
     drop(stdin);
 
     if !wait_with_timeout(&mut child, Duration::from_secs(10)) {
         child.kill().ok();
-        panic!("system-bridge did not exit within 10 seconds after stdin close");
+        panic!("native host did not exit within 10 seconds after stdin close");
     }
 
-    eprintln!("system-bridge exited cleanly after stdin EOF");
+    eprintln!("native host exited cleanly after stdin EOF");
 }
 
 #[test]
@@ -240,7 +240,7 @@ fn conformance__handshake__capabilities_are_reported__impl__rust() {
     drop(stdin);
     if !wait_with_timeout(&mut child, Duration::from_secs(10)) {
         child.kill().ok();
-        panic!("system-bridge did not exit within 10 seconds after stdin close");
+        panic!("native host did not exit within 10 seconds after stdin close");
     }
 }
 
@@ -277,7 +277,7 @@ fn conformance__handshake__contract_versions_are_reported__impl__rust() {
     drop(stdin);
     if !wait_with_timeout(&mut child, Duration::from_secs(10)) {
         child.kill().ok();
-        panic!("system-bridge did not exit within 10 seconds after stdin close");
+        panic!("native host did not exit within 10 seconds after stdin close");
     }
 }
 
@@ -316,6 +316,6 @@ fn conformance__handshake__roots_are_included_in_daemon_info__impl__rust() {
     drop(stdin);
     if !wait_with_timeout(&mut child, Duration::from_secs(10)) {
         child.kill().ok();
-        panic!("system-bridge did not exit within 10 seconds after stdin close");
+        panic!("native host did not exit within 10 seconds after stdin close");
     }
 }

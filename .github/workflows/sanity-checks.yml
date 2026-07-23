@@ -39,7 +39,6 @@ jobs:
 
       - name: Check Python locks
         run: |
-          uv lock --project desktop --check
           uv lock --project packages/engine/integration/python --check
           uv lock --project ios --check
 
@@ -47,7 +46,7 @@ jobs:
         run: |
           audit_dir="$(mktemp -d)"
           trap 'rm -rf "$audit_dir"' EXIT
-          for project in desktop packages/engine/integration/python ios; do
+          for project in packages/engine/integration/python ios; do
             requirements="$audit_dir/$(echo "$project" | tr '/' '-').txt"
             uv export \
               --project "$project" \

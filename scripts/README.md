@@ -5,7 +5,8 @@ root unless their usage output says otherwise.
 
 ## Validation and Test Support
 
-- `check.sh`, `check-root-deps.sh`, `check-versions.sh`: repository checks
+- `check.sh`: the primary local lint, type, documentation, and test gate
+- `check-root-deps.sh`: ensures runtime dependencies stay with their workspace
 - `check-docs.mjs`: active documentation validation
 - `e2e-companion-smoke.sh`: extension-to-Android companion download smoke test
 - `setup-android-test-env.sh`: Android test dependencies

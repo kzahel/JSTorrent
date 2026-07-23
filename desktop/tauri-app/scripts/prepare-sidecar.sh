@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build system-bridge (native host) and io-daemon, copy to target dirs for Tauri dev/build
+# Build the native host and io-daemon, then copy them for Tauri dev/build
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -24,7 +24,7 @@ if [ "${CI:-}" = "true" ] && [ -s "$HOST_BIN" ] && [ -s "$DAEMON_BIN" ]; then
   exit 0
 fi
 
-# Build system-bridge (native host) - release for performance even in dev
+# Build the native host in release mode for performance even in development
 cargo build --release -p jstorrent-host --manifest-path "$DESKTOP_DIR/Cargo.toml"
 
 # Build io-daemon - release for performance even in dev

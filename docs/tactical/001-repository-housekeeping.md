@@ -139,10 +139,11 @@ cargo audit
 
 ### 4. Python And uv Refresh
 
-- [x] Move project Python pins from 3.10 to 3.12, subject to libtorrent
+- [x] Move maintained Python projects from 3.10 to 3.12, subject to libtorrent
   compatibility.
-- [x] Fix the desktop Python project name and placeholder metadata mismatch.
-- [x] Refresh and audit both uv lockfiles.
+- [x] Assess the desktop verifier environment; it was refreshed at its
+  checkpoint, then removed with the conclusively obsolete verifier suite.
+- [x] Refresh and audit the maintained uv lockfiles.
 - [x] Give the iOS App Store Connect script a small locked uv project and
   replace unpinned `pip install --break-system-packages` workflow steps with
   `uv run`.
@@ -151,16 +152,16 @@ cargo audit
 Validation:
 
 ```bash
-cd desktop
-uv lock --check
-uv run python --version
-
 cd packages/engine/integration/python
 uv lock --check
 uv run python --version
+
+cd ../../../../ios
+uv lock --check
+uv run python scripts/appstore_connect.py --help
 ```
 
-Run Python dependency auditing against both resolved projects and run the
+Run Python dependency auditing against both maintained projects and run the
 integration Python tests used by the root workspace.
 
 ### 5. Supported Toolchains And CI Reproducibility
@@ -185,13 +186,13 @@ the hosted CI run after push.
 
 ### 6. Stale Tooling And Artifact Cleanup
 
-- [ ] Remove tracked `.bak`, `.raw`, `.err`, and debug log artifacts that have
+- [x] Remove tracked `.bak`, `.raw`, `.err`, and debug log artifacts that have
   no source role; adjust narrow ignore patterns where useful.
-- [ ] Remove or replace desktop Python verifier scripts that invoke the removed
+- [x] Remove or replace desktop Python verifier scripts that invoke the removed
   `jstorrent-link-handler` binary.
-- [ ] Remove obsolete `system-bridge` installer/version references and stale
+- [x] Remove obsolete `system-bridge` installer/version references and stale
   monorepo guidance.
-- [ ] Review apparently orphaned scripts individually and remove only those
+- [x] Review apparently orphaned scripts individually and remove only those
   whose callers and purpose are conclusively obsolete.
 
 Validation:
@@ -407,6 +408,38 @@ their direct uv installer and Python 3.11 setup were replaced with the same
 locked Python 3.12 project used locally. Workflow defaults are read-only, with
 write permission confined to release/deployment jobs.
 
-The repository sanity gate now audits production JavaScript and all three
+The repository sanity gate now audits production JavaScript and the maintained
 Python locks. The Linux Tauri job runs the pinned Rust formatter and clippy
 gate and installs cargo-audit 0.22.2 for the Rust dependency gate.
+
+### Stale Tooling And Artifact Cleanup
+
+The tracked translation intermediates, debug log, and editor backup files had
+no source role and are removed. Narrow ignore rules now prevent debug logs and
+editor backups from being recommitted while preserving deliberate text
+fixtures.
+
+The desktop `verify_*.py` scripts had no callers or CI entry point. Several
+invoked the removed `jstorrent-link-handler`; others duplicated maintained
+Rust and protocol-conformance coverage, assumed a particular working
+directory, or mutated developer-local state. The suite, its aggregator,
+placeholder `main.py`, and the now-empty desktop Python environment are
+removed. Python lock and audit CI now covers the two maintained environments:
+the engine integration suite and iOS release tooling.
+
+The public `install-bridge.sh` fetched superseded `system-bridge-v*` assets and
+the version checker reported retired component tags, so both are removed.
+Active desktop comments and diagnostics now call the component the native
+host. The root dependency check remains useful, but no longer depends on `jq`
+or points readers to the former monorepo repository.
+
+Validation:
+
+- the maintained Python locks passed `uv lock --check`
+- the root dependency policy check passed from outside the repository root
+- unarchived source has no executable references to the retired installer,
+  version checker, verifier scripts, or link-handler binary
+- remaining `system-bridge` references are confined to archived history and
+  this execution record
+- workflow YAML parsing, documentation checks, formatting, and
+  `git diff --check` passed

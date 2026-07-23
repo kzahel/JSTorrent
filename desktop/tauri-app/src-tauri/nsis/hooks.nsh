@@ -8,7 +8,7 @@
     nsis_tauri_utils::KillProcess "JSTorrent.exe" $R0
   ${EndIf}
 
-  ; Kill sidecar: system-bridge host
+  ; Kill the native host sidecar
   nsis_tauri_utils::FindProcess "jstorrent-host.exe" $R0
   ${If} $R0 = 0
     nsis_tauri_utils::KillProcess "jstorrent-host.exe" $R0

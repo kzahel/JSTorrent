@@ -1,20 +1,15 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
-# Check if jq is installed
-if ! command -v jq &> /dev/null; then
-    echo "Error: jq is required but not installed."
-    exit 1
-fi
+root_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-count=$(jq '.dependencies // {} | length' package.json)
-
-if [ "$count" -ne 0 ]; then
-  echo "ERROR: Root package.json contains runtime dependencies."
-  echo "This monorepo requires ALL runtime dependencies to live inside individual packages."
-  echo "Only tooling should be installed at the root (eslint, prettier, typescript, turbo, etc.)."
-  echo "See: https://github.com/kzahel/jstorrent-monorepo#root-packagejson-policy"
+if node -e '
+  const dependencies = require(process.argv[1]).dependencies ?? {};
+  process.exit(Object.keys(dependencies).length === 0 ? 0 : 1);
+' "$root_dir/package.json"; then
+  echo "Success: root package.json contains only shared development tooling."
+else
+  echo "ERROR: root package.json contains runtime dependencies."
+  echo "Runtime dependencies belong to the workspace package that uses them."
   exit 1
 fi
-
-echo "Success: No runtime dependencies found in root package.json."

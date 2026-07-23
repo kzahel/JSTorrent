@@ -1,7 +1,7 @@
 /**
  * TauriChannel — HostChannel implementation for the Tauri desktop app (context 4).
  *
- * Communicates with the system-bridge via the Tauri Rust backend, which relays
+ * Communicates with the native host via the Tauri Rust backend, which relays
  * messages over stdin/stdout using the native messaging protocol.
  *
  * KV storage is routed through the native host to SQLite on disk,
@@ -302,7 +302,7 @@ export class TauriChannel implements HostChannel {
       })
     }
 
-    // Listen for events from system-bridge (MagnetAdded, TorrentAdded)
+    // Listen for events from native host (MagnetAdded, TorrentAdded)
     this.eventUnlisten = await tauriListen<{ event?: string; payload?: unknown }>(
       'host-event',
       (event) => {
@@ -608,7 +608,7 @@ export class TauriChannel implements HostChannel {
   }
 
   triggerLaunch(): void {
-    // No-op — daemon is always launched by system-bridge
+    // No-op — daemon is always launched by native host
   }
 
   async openVideoPlayerPopup(_options: VideoPopupLaunchOptions): Promise<boolean> {

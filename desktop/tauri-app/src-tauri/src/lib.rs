@@ -88,7 +88,7 @@ struct HostBridge {
 }
 
 impl HostBridge {
-    /// Write a length-prefixed JSON message to system-bridge stdin.
+    /// Write a length-prefixed JSON message to native host stdin.
     fn send(&self, message: &serde_json::Value) -> Result<(), String> {
         let json = serde_json::to_vec(message).map_err(|e| e.to_string())?;
         let len = (json.len() as u32).to_le_bytes();
@@ -650,26 +650,26 @@ fn resolve_sidecar(app: &tauri::AppHandle, name: &str) -> Result<PathBuf, String
     ))
 }
 
-/// Read native messaging frames from system-bridge stdout and dispatch them.
+/// Read native messaging frames from native host stdout and dispatch them.
 fn run_stdout_reader(stdout: &mut ChildStdout, bridge: &HostBridge, app_handle: &tauri::AppHandle) {
     let mut len_buf = [0u8; 4];
 
     loop {
         if stdout.read_exact(&mut len_buf).is_err() {
-            eprintln!("system-bridge: stdout closed");
+            eprintln!("native host: stdout closed");
             break;
         }
         let len = u32::from_le_bytes(len_buf) as usize;
         let mut buf = vec![0u8; len];
         if stdout.read_exact(&mut buf).is_err() {
-            eprintln!("system-bridge: read error");
+            eprintln!("native host: read error");
             break;
         }
 
         let msg: serde_json::Value = match serde_json::from_slice(&buf) {
             Ok(v) => v,
             Err(e) => {
-                eprintln!("system-bridge: invalid JSON: {e}");
+                eprintln!("native host: invalid JSON: {e}");
                 continue;
             }
         };
@@ -1452,9 +1452,9 @@ pub fn run() {
                 eprintln!("native-host: registration failed: {e}");
             }
 
-            // Spawn system-bridge sidecar
+            // Spawn native host sidecar
             let host_path = resolve_sidecar(app.handle(), "binaries/jstorrent-host")?;
-            eprintln!("Spawning system-bridge: {}", host_path.display());
+            eprintln!("Spawning native host: {}", host_path.display());
 
             let mut cmd = std::process::Command::new(&host_path);
             cmd.arg("--launcher")
@@ -1470,7 +1470,7 @@ pub fn run() {
             }
             let mut child = cmd
                 .spawn()
-                .map_err(|e| format!("Failed to spawn system-bridge: {e}"))?;
+                .map_err(|e| format!("Failed to spawn native host: {e}"))?;
 
             let stdin = child.stdin.take().expect("stdin not captured");
             let mut stdout = child.stdout.take().expect("stdout not captured");
@@ -1489,7 +1489,7 @@ pub fn run() {
             std::thread::spawn(move || {
                 let _child = child; // Keep child handle alive
                 run_stdout_reader(&mut stdout, &bridge, &app_handle);
-                eprintln!("system-bridge: sidecar exited, shutting down Tauri app");
+                eprintln!("native host: sidecar exited, shutting down Tauri app");
                 app_handle.exit(0);
             });
 
