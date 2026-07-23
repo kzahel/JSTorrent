@@ -515,3 +515,10 @@ The first hosted run exposed a release-tag convention difference in
 publish a moving `v9` tag. GitHub therefore rejected affected jobs during
 setup, before repository code ran. Workflows now use the resolvable exact
 action tag while retaining the separately pinned uv tool version.
+
+The refreshed Rust dependency graph also made the x86 macOS sidecar build fail
+when cross-compiled on an arm64 macOS runner. GitHub provides native macOS 26
+runners for both architectures, so the x86 target now runs on
+`macos-26-intel` while Apple Silicon remains on `macos-26`. This keeps the OS
+baseline consistent and removes unnecessary C/Rust cross-compilation from the
+release matrix.
