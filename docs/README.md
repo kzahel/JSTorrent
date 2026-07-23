@@ -3,6 +3,9 @@
 JSTorrent keeps only documentation with a clear current role at the active
 level:
 
+- [`tactical/`](tactical/README.md) contains bounded implementation plans and
+  execution records. Numbered tacticals track multi-commit work from an
+  explicit scope through validation and closeout.
 - [`topics/`](topics/README.md) contains living records for continuing
   concerns. These documents own current status, decisions, gaps, and next work.
 - [`contracts/`](contracts/README.md) contains normative protocol contracts
