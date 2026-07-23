@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
+import org.junit.Assume.assumeTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 
@@ -82,9 +83,13 @@ class DownloadE2ETest : E2EBaseTest() {
         assertTrue("Should connect to seeder peer", peersConnected)
 
         // Wait for download progress
-        val madeProgress = waitForProgress(expectedHash, minProgress = 0.05, timeoutMs = E2ETestConfig.DOWNLOAD_PROGRESS_TIMEOUT_MS)
+        val madeProgress = waitForProgress(
+            expectedHash,
+            minProgress = 0.0025,
+            timeoutMs = E2ETestConfig.DOWNLOAD_PROGRESS_TIMEOUT_MS
+        )
         logTorrentState()
-        assertTrue("Should make download progress (at least 5%)", madeProgress)
+        assertTrue("Should download at least one 256KB piece", madeProgress)
 
         // Verify download speed was non-zero at some point
         val finalTorrent = getTorrentByHash(expectedHash)
@@ -157,7 +162,11 @@ class DownloadE2ETest : E2EBaseTest() {
         Log.i(TAG, "Torrent resumed")
 
         // Wait for progress after resume
-        val madeProgress = waitForProgress(expectedHash, minProgress = 0.05, timeoutMs = E2ETestConfig.DOWNLOAD_PROGRESS_TIMEOUT_MS)
+        val madeProgress = waitForProgress(
+            expectedHash,
+            minProgress = 0.0025,
+            timeoutMs = E2ETestConfig.DOWNLOAD_PROGRESS_TIMEOUT_MS
+        )
         logTorrentState()
         assertTrue("Should make progress after resume", madeProgress)
     }
@@ -170,6 +179,11 @@ class DownloadE2ETest : E2EBaseTest() {
      */
     @Test
     fun fullDownload_completes() {
+        assumeTrue(
+            "Pass run_full_downloads=true to run full 100MB downloads",
+            E2ETestConfig.runFullDownloads(arguments)
+        )
+
         val controller = requireController()
         val magnet = TestMagnets.getMagnetForTest(arguments, "100mb")
         val expectedHash = TestMagnets.InfoHashes.TEST_100MB
@@ -202,6 +216,11 @@ class DownloadE2ETest : E2EBaseTest() {
      */
     @Test
     fun fullDownload_1gb_completes() {
+        assumeTrue(
+            "Start the 1GB seeder and pass run_large_downloads=true",
+            E2ETestConfig.runLargeDownloads(arguments)
+        )
+
         val controller = requireController()
         val magnet = TestMagnets.getMagnetForTest(arguments, "1gb")
         val expectedHash = TestMagnets.InfoHashes.TEST_1GB

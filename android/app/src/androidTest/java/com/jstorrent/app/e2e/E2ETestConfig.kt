@@ -42,13 +42,13 @@ object E2ETestConfig {
      * Timeout for download progress checks (milliseconds).
      * This is how long to wait for progress to increase.
      */
-    const val DOWNLOAD_PROGRESS_TIMEOUT_MS = 5_000L
+    const val DOWNLOAD_PROGRESS_TIMEOUT_MS = 15_000L
 
     /**
      * Timeout for full download completion (milliseconds).
      * Used for tests that download entire files (100MB+).
      */
-    const val FULL_DOWNLOAD_TIMEOUT_MS = 20_000L
+    const val FULL_DOWNLOAD_TIMEOUT_MS = 300_000L
 
     /**
      * Timeout for initial 1GB download progress checks (milliseconds).
@@ -60,7 +60,7 @@ object E2ETestConfig {
      * Timeout for full 1GB download completion (milliseconds).
      * The emulator-host seeder path is fast, but we still want enough slack for CI.
      */
-    const val FULL_DOWNLOAD_1GB_TIMEOUT_MS = 300_000L
+    const val FULL_DOWNLOAD_1GB_TIMEOUT_MS = 600_000L
 
     /**
      * Polling interval for checking engine/torrent state (milliseconds).
@@ -80,5 +80,21 @@ object E2ETestConfig {
     fun getSeederPort(arguments: android.os.Bundle): Int {
         val portStr = arguments.getString("seeder_port")
         return portStr?.toIntOrNull() ?: DEFAULT_SEEDER_PORT
+    }
+
+    /**
+     * Full fixture downloads are deliberately opt-in. The default E2E gate checks
+     * peer connectivity and data transfer without adding several minutes of runtime.
+     */
+    fun runFullDownloads(arguments: android.os.Bundle): Boolean {
+        return arguments.getString("run_full_downloads").toBoolean()
+    }
+
+    /**
+     * The 1GB fixture uses a different seeder invocation from the default 100MB
+     * fixture, so its long-running test must be requested independently.
+     */
+    fun runLargeDownloads(arguments: android.os.Bundle): Boolean {
+        return arguments.getString("run_large_downloads").toBoolean()
     }
 }

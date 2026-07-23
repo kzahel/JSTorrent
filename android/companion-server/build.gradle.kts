@@ -47,9 +47,9 @@ dependencies {
     implementation(project(":io-core"))
 
     // Pure Netty HTTP server (replaces Ktor for 6-10x better throughput)
-    implementation("io.netty:netty-codec-http:4.1.100.Final")
-    implementation("io.netty:netty-handler:4.1.100.Final")
-    implementation("io.netty:netty-transport:4.1.100.Final")
+    implementation(libs.netty.codec.http)
+    implementation(libs.netty.handler)
+    implementation(libs.netty.transport)
 
     // Java-WebSocket for high-throughput /io and /control endpoints
     // This library achieves 8x better throughput than Ktor WebSocket

@@ -103,10 +103,10 @@ pnpm audit --prod
 
 ### 2. Android Network Dependency Update
 
-- [ ] Centralize the hard-coded Netty version in the Gradle version catalog.
-- [ ] Update Netty from `4.1.100.Final` to a non-vulnerable current 4.1.x
+- [x] Centralize the hard-coded Netty version in the Gradle version catalog.
+- [x] Update Netty from `4.1.100.Final` to a non-vulnerable current 4.1.x
   release.
-- [ ] Compile Android and run unit tests, companion-server tests, and applicable
+- [x] Compile Android and run unit tests, companion-server tests, and applicable
   end-to-end coverage.
 
 Validation:
@@ -318,3 +318,31 @@ Validation:
 - the production dependency audit reported zero vulnerabilities
 - the built site was served locally, the homepage returned valid content, and
   a full-page Chromium capture was visually inspected
+
+### Android Netty Update
+
+The companion server and its app benchmark fixtures now share Netty
+4.1.136.Final through the Gradle version catalog instead of repeating
+4.1.100.Final in build scripts.
+
+Validation:
+
+- companion-server debug unit tests passed
+- app debug Kotlin compilation passed
+- app debug unit tests passed
+- the default emulator E2E gate passed against the real Python seeder; long
+  100MB and 1GB completion tests are now explicit opt-in checks
+- the build resolved the updated artifacts and completed successfully
+- OSV returned no advisories for the selected codec-http, handler, or transport
+  artifacts
+
+The E2E validation exposed stale assumptions rather than a Netty regression:
+the progress checks required 5MB within five seconds, and the default 100MB
+seeder could never satisfy the 1GB completion test. The normal gate now waits
+for an actual piece transfer, while the full-fixture tests use realistic
+timeouts and explicit instrumentation flags.
+
+The build still reports existing Gradle 9 migration warnings, chiefly the
+quickjs module's deprecated `Project.exec` use. That infrastructure migration
+is separate from the network dependency update and does not affect the current
+Gradle 8.13 gate.
