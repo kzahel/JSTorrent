@@ -37,9 +37,14 @@ NEW_CODE=$((CURRENT_CODE + 1))
 
 echo "Updating version: $CURRENT_CODE -> $NEW_CODE, versionName: $VERSION"
 
-# Update build.gradle.kts
-sed -i '' "s/versionCode = $CURRENT_CODE/versionCode = $NEW_CODE/" "$BUILD_GRADLE"
-sed -i '' "s/versionName = \"[^\"]*\"/versionName = \"$VERSION\"/" "$BUILD_GRADLE"
+# Update build.gradle.kts (GNU sed on Linux, BSD sed on macOS)
+if sed --version >/dev/null 2>&1; then
+  sed -i "s/versionCode = $CURRENT_CODE/versionCode = $NEW_CODE/" "$BUILD_GRADLE"
+  sed -i "s/versionName = \"[^\"]*\"/versionName = \"$VERSION\"/" "$BUILD_GRADLE"
+else
+  sed -i '' "s/versionCode = $CURRENT_CODE/versionCode = $NEW_CODE/" "$BUILD_GRADLE"
+  sed -i '' "s/versionName = \"[^\"]*\"/versionName = \"$VERSION\"/" "$BUILD_GRADLE"
+fi
 
 # Commit, tag, and push
 git add "$BUILD_GRADLE" "$CHANGELOG"

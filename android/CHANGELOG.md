@@ -2,6 +2,12 @@
 
 All notable changes to the Android app are documented here.
 
+## [1.0.24] - 2026-07-23
+
+### Changed
+- Target Android 16 (API level 36) for the 2026 Google Play requirements
+- Update Android build and test compatibility for API level 36
+
 ## [1.0.23]
 
 ### Added
