@@ -219,8 +219,8 @@ stale paths.
 
 ### 8. Closeout
 
-- [ ] Run the complete local gate set under the pinned Node version.
-- [ ] Record final audit results and any narrowly justified residual findings
+- [x] Run the complete local gate set under the pinned Node version.
+- [x] Record final audit results and any narrowly justified residual findings
   in this tactical.
 - [ ] Mark each landed work item and this tactical completed.
 - [ ] Push the complete commit series.
@@ -475,3 +475,31 @@ Validation:
 - the website build included the bootstrap manifest byte-for-byte
 - workflow YAML parsing, documentation checks, formatting, and shell syntax
   checks passed
+
+### Final Local Validation
+
+The final repeatable gate ran on Node 24.18.0 and pnpm 11.16.0 with a frozen
+lockfile:
+
+- ESLint completed with no errors and 41 existing warning-only findings;
+  Prettier, active-documentation validation, and all TypeScript checks passed
+- 2,109 JavaScript tests passed and one test remained intentionally skipped
+- every workspace build passed, including the extension, Tauri frontend,
+  engine CLI, plugin SDK, and Astro website
+- `pnpm audit --prod` reported no known vulnerabilities
+- Android compilation, all debug unit-test tasks, and lint completed
+  successfully; the earlier emulator-backed transfer gate also passed
+- Rust formatting, clippy with warnings denied, and all 105 workspace tests
+  passed
+- `cargo audit` reported no vulnerabilities and the 18 previously classified
+  warning-only records in Tauri's Linux/platform transitive graph
+- both maintained uv locks were immutable, both hashed Python audits reported
+  no known vulnerabilities, and all 19 self-contained integration scenarios
+  passed with two external-seeder cases intentionally skipped
+- all ten release-integrity cases passed across the two public installers
+- root dependency policy, workflow YAML parsing, and `git diff --check` passed
+
+Android still emits the known Gradle 9 migration warning for deprecated Gradle
+8 APIs. The JavaScript lint warnings and Rust warning-only advisories predate
+this campaign and are visible in their respective tools; none is a failing
+security advisory or regression introduced by these updates.
