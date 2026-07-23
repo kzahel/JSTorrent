@@ -68,7 +68,7 @@ jobs:
         run: npx playwright install --with-deps chromium
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v9
+        uses: astral-sh/setup-uv@v9.0.0
         with:
           version: '0.9.18'
           enable-cache: true

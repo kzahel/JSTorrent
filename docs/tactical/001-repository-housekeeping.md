@@ -509,3 +509,9 @@ pre-push hook sourced NVM without selecting `.nvmrc`, then put a legacy pnpm 9
 installation first on `PATH`. The hook now selects the pinned Node version and
 invokes pnpm through Corepack, which resolves the repository's pinned
 11.16.0 release. Its formatting gate passes under that exact toolchain.
+
+The first hosted run exposed a release-tag convention difference in
+`astral-sh/setup-uv`: its current release is tagged `v9.0.0`, but it does not
+publish a moving `v9` tag. GitHub therefore rejected affected jobs during
+setup, before repository code ran. Workflows now use the resolvable exact
+action tag while retaining the separately pinned uv tool version.
