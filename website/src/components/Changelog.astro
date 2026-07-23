@@ -141,7 +141,27 @@ function formatDate(dateStr: string): string {
   return d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
 }
 
-const repoRoot = path.resolve(import.meta.dirname, '..', '..', '..')
+function findRepoRoot(startDir: string): string {
+  let candidate = path.resolve(startDir)
+  while (true) {
+    if (
+      fs.existsSync(path.join(candidate, 'extension', 'CHANGELOG.md')) &&
+      fs.existsSync(path.join(candidate, 'android', 'CHANGELOG.md'))
+    ) {
+      return candidate
+    }
+
+    const parent = path.dirname(candidate)
+    if (parent === candidate) {
+      throw new Error(`Unable to find repository root from ${startDir}`)
+    }
+    candidate = parent
+  }
+}
+
+// Astro 7 bundles prerendered components into dist/.prerender, so
+// import.meta.dirname no longer identifies the source tree.
+const repoRoot = findRepoRoot(process.cwd())
 const tagDates = getTagDates(repoRoot)
 
 const allEntries: ChangelogEntry[] = []

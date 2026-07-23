@@ -167,9 +167,7 @@ function detectPlatform(): Platform {
 
 function detectArm64(): boolean {
   const ua = navigator.userAgent.toLowerCase()
-  if (ua.includes('aarch64') || ua.includes('arm64')) return true
-  if (navigator.platform?.toLowerCase().includes('aarch64')) return true
-  return false
+  return ua.includes('aarch64') || ua.includes('arm64')
 }
 
 interface DownloadsProps {

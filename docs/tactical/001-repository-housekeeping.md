@@ -37,7 +37,7 @@ to attribute.
 
 - Dependabot or Renovate configuration
 - React 19 migration
-- Vite 8 migration
+- standalone Vite 8 migration outside Astro's website-owned build toolchain
 - TypeScript 7 migration
 - QuickJS-NG submodule upgrade
 - Android API 37 local-network permission implementation
@@ -82,10 +82,10 @@ path review remain part of each update slice.
 - [x] Replace the unmaintained `npm-run-all` package with a maintained
   equivalent.
 - [x] Align workspace TypeScript ranges before deduplicating the lockfile.
-- [ ] Update the website's affected Astro/Vite/Rollup/sharp dependency chain.
+- [x] Update the website's affected Astro/Vite/Rollup/sharp dependency chain.
   Keep the Astro major migration isolated because it may require source or
   configuration changes.
-- [ ] Re-run the production audit and document remaining accepted or deferred
+- [x] Re-run the production audit and document remaining accepted or deferred
   findings.
 
 Validation:
@@ -294,3 +294,27 @@ Validation:
 - 2,109 tests passed and 1 live-network test remained intentionally skipped
 - the production audit fell from 57 paths to 42 paths: 19 high, 18 moderate,
   and 5 low, all currently rooted in the Astro website dependency graph
+
+### Astro 7 Website Migration
+
+The website now uses Astro 7.1.3 and matching current official integrations.
+Astro 7 necessarily owns a Vite 8 build internally; the standalone extension
+and desktop Vite configurations remain on Vite 7 as planned. The migration also
+moved Astro's checker to development dependencies and refreshed affected
+Rollup, sharp, YAML, glob, and TOML parsing packages.
+
+Astro 7 bundles prerendered component code under `dist/.prerender`, so the
+changelog component can no longer derive the source repository from
+`import.meta.dirname`. It now locates the monorepo root from the build working
+directory. The content schema uses Astro's current Zod export, inline analytics
+is explicit, and deprecated `navigator.platform` detection was removed.
+
+Validation:
+
+- `pnpm peers check` reported no peer dependency issues
+- the complete workspace static checks and builds passed
+- Astro check reported no errors, warnings, or hints
+- all five static routes, the RSS feed, and the sitemap built
+- the production dependency audit reported zero vulnerabilities
+- the built site was served locally, the homepage returned valid content, and
+  a full-page Chromium capture was visually inspected
