@@ -16,8 +16,8 @@ It is the normative source for:
 
 Machine-readable companion:
 
-- [native-host-conformance.json](/Users/kgraehl/code/jstorrent/contracts/native-host-conformance.json)
-- [native-host-protocol.json](/Users/kgraehl/code/jstorrent/contracts/native-host-protocol.json)
+- [native-host-conformance.json](../../contracts/native-host-conformance.json)
+- [native-host-protocol.json](../../contracts/native-host-protocol.json)
 
 Declared contract generation:
 
@@ -35,7 +35,7 @@ Desktop today has two distinct contracts:
 - IO daemon surface via `/io`, `/control`, and HTTP endpoints
 
 The IO daemon contract is documented separately in
-[io-daemon-contract.md](/Users/kgraehl/code/jstorrent/docs/contracts/io-daemon-contract.md).
+[io-daemon-contract.md](io-daemon-contract.md).
 
 ## Transport
 
@@ -222,7 +222,7 @@ Capabilities are additive and optional.
 ## Conformance Model
 
 Conformance is tracked by stable case IDs in
-[native-host-conformance.json](/Users/kgraehl/code/jstorrent/contracts/native-host-conformance.json).
+[native-host-conformance.json](../../contracts/native-host-conformance.json).
 
 Initial required case areas:
 

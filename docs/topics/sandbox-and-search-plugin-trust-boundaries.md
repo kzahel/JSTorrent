@@ -1,4 +1,10 @@
-# Sandbox Overview
+# Sandbox and Search Plugin Trust Boundaries
+
+Topic: `sandbox-and-search-plugin-trust-boundaries`
+
+Status: **living trust-boundary record; implementation details were last
+reconciled on 2026-03-13, and policy claims must be revalidated before a Google
+Play submission**.
 
 This document summarizes the sandbox and trust boundaries for JSTorrent across the current shipping platforms:
 
@@ -46,20 +52,20 @@ Current shape:
 - The extension UI runs in a regular extension page, not in the service worker.
 - The extension requires either the desktop native host or the Android companion for filesystem/socket I/O.
 - The search plugin runtime is split out into a dedicated extension sandbox page:
-  - [`extension/public/manifest.json`](/Users/kgraehl/code/jstorrent/extension/public/manifest.json)
-  - [`packages/client/search-plugin-sandbox/search-plugin-sandbox.html`](/Users/kgraehl/code/jstorrent/packages/client/search-plugin-sandbox/search-plugin-sandbox.html)
-  - [`packages/client/search-plugin-sandbox/search-plugin-sandbox.js`](/Users/kgraehl/code/jstorrent/packages/client/search-plugin-sandbox/search-plugin-sandbox.js)
+  - [`extension/public/manifest.json`](../../extension/public/manifest.json)
+  - [`packages/client/search-plugin-sandbox/search-plugin-sandbox.html`](../../packages/client/search-plugin-sandbox/search-plugin-sandbox.html)
+  - [`packages/client/search-plugin-sandbox/search-plugin-sandbox.js`](../../packages/client/search-plugin-sandbox/search-plugin-sandbox.js)
 
 Important boundaries:
 
 - `manifest.json` declares `search-plugin-sandbox.html` as a Chrome extension sandbox page.
 - The iframe host sets `sandbox="allow-scripts"` for the plugin iframe path:
-  - [`packages/client/src/search/iframe-search-plugin-sandbox-host.ts`](/Users/kgraehl/code/jstorrent/packages/client/src/search/iframe-search-plugin-sandbox-host.ts)
+  - [`packages/client/src/search/iframe-search-plugin-sandbox-host.ts`](../../packages/client/src/search/iframe-search-plugin-sandbox-host.ts)
 - Plugin source is evaluated inside the sandbox page with `new Function(...)`.
 - Plugin code does not get direct Chrome extension APIs.
 - Plugin code does not perform direct network requests. Instead, it asks the host for `fetchText` / `fetchJson`.
 - Host fetches are checked against the plugin manifest `hosts` allowlist:
-  - [`packages/client/src/search/plugin-utils.ts`](/Users/kgraehl/code/jstorrent/packages/client/src/search/plugin-utils.ts)
+  - [`packages/client/src/search/plugin-utils.ts`](../../packages/client/src/search/plugin-utils.ts)
 
 Practical summary:
 
@@ -74,8 +80,8 @@ Current shape:
 - The desktop app bundles the same client assets as the extension UI.
 - The torrent engine runs in the Tauri webview.
 - Native capabilities are provided by Tauri plugins and sidecar binaries:
-  - [`desktop/tauri-app/src-tauri/tauri.conf.json`](/Users/kgraehl/code/jstorrent/desktop/tauri-app/src-tauri/tauri.conf.json)
-  - [`desktop/tauri-app/src-tauri/capabilities/default.json`](/Users/kgraehl/code/jstorrent/desktop/tauri-app/src-tauri/capabilities/default.json)
+  - [`desktop/tauri-app/src-tauri/tauri.conf.json`](../../desktop/tauri-app/src-tauri/tauri.conf.json)
+  - [`desktop/tauri-app/src-tauri/capabilities/default.json`](../../desktop/tauri-app/src-tauri/capabilities/default.json)
 
 Important boundaries:
 
@@ -83,7 +89,7 @@ Important boundaries:
 - The default capability grants a broad set of permissions, including shell execution/spawn for app-managed native flows.
 - The main Tauri app CSP is currently `null`, so the desktop story is not "tight web CSP plus no native escape." It depends more on Tauri capability control and the app's own boundaries.
 - The search plugin feature still uses the client-side iframe sandbox host when available:
-  - [`packages/client/src/search/iframe-search-plugin-sandbox-host.ts`](/Users/kgraehl/code/jstorrent/packages/client/src/search/iframe-search-plugin-sandbox-host.ts)
+  - [`packages/client/src/search/iframe-search-plugin-sandbox-host.ts`](../../packages/client/src/search/iframe-search-plugin-sandbox-host.ts)
 
 Practical summary:
 
@@ -98,7 +104,7 @@ Current shape:
 - The torrent engine runs in-process inside QuickJS with JNI bindings for filesystem/network/hash operations.
 - The app requests standard torrent-related permissions such as network access and foreground service.
 - The manifest currently enables cleartext traffic globally:
-  - [`android/app/src/main/AndroidManifest.xml`](/Users/kgraehl/code/jstorrent/android/app/src/main/AndroidManifest.xml)
+  - [`android/app/src/main/AndroidManifest.xml`](../../android/app/src/main/AndroidManifest.xml)
 
 Important boundaries:
 
@@ -135,11 +141,11 @@ This is the feature most likely to matter for Play review.
 The browser/Tauri implementation uses:
 
 - a dedicated sandbox document:
-  - [`packages/client/search-plugin-sandbox/search-plugin-sandbox.html`](/Users/kgraehl/code/jstorrent/packages/client/search-plugin-sandbox/search-plugin-sandbox.html)
+  - [`packages/client/search-plugin-sandbox/search-plugin-sandbox.html`](../../packages/client/search-plugin-sandbox/search-plugin-sandbox.html)
 - a dedicated sandbox runtime:
-  - [`packages/client/search-plugin-sandbox/search-plugin-sandbox.js`](/Users/kgraehl/code/jstorrent/packages/client/search-plugin-sandbox/search-plugin-sandbox.js)
+  - [`packages/client/search-plugin-sandbox/search-plugin-sandbox.js`](../../packages/client/search-plugin-sandbox/search-plugin-sandbox.js)
 - an iframe host:
-  - [`packages/client/src/search/iframe-search-plugin-sandbox-host.ts`](/Users/kgraehl/code/jstorrent/packages/client/src/search/iframe-search-plugin-sandbox-host.ts)
+  - [`packages/client/src/search/iframe-search-plugin-sandbox-host.ts`](../../packages/client/src/search/iframe-search-plugin-sandbox-host.ts)
 
 Execution model:
 
@@ -161,11 +167,11 @@ Execution model:
 The Android implementation uses:
 
 - a dedicated local asset WebView host:
-  - [`android/app/src/main/java/com/jstorrent/app/search/AndroidSearchPluginSandboxHost.kt`](/Users/kgraehl/code/jstorrent/android/app/src/main/java/com/jstorrent/app/search/AndroidSearchPluginSandboxHost.kt)
+  - [`android/app/src/main/java/com/jstorrent/app/search/AndroidSearchPluginSandboxHost.kt`](../../android/app/src/main/java/com/jstorrent/app/search/AndroidSearchPluginSandboxHost.kt)
 - a fetch mediator:
-  - [`android/app/src/main/java/com/jstorrent/app/search/SearchPluginFetchMediator.kt`](/Users/kgraehl/code/jstorrent/android/app/src/main/java/com/jstorrent/app/search/SearchPluginFetchMediator.kt)
+  - [`android/app/src/main/java/com/jstorrent/app/search/SearchPluginFetchMediator.kt`](../../android/app/src/main/java/com/jstorrent/app/search/SearchPluginFetchMediator.kt)
 - manifest and fetch normalization helpers:
-  - [`android/app/src/main/java/com/jstorrent/app/search/SearchPluginUtils.kt`](/Users/kgraehl/code/jstorrent/android/app/src/main/java/com/jstorrent/app/search/SearchPluginUtils.kt)
+  - [`android/app/src/main/java/com/jstorrent/app/search/SearchPluginUtils.kt`](../../android/app/src/main/java/com/jstorrent/app/search/SearchPluginUtils.kt)
 
 The Android host currently does all of the following:
 
@@ -216,7 +222,7 @@ That means:
 
 The Android plugin fetch mediator accepts `http` and `https` URLs:
 
-- [`android/app/src/main/java/com/jstorrent/app/search/SearchPluginFetchMediator.kt`](/Users/kgraehl/code/jstorrent/android/app/src/main/java/com/jstorrent/app/search/SearchPluginFetchMediator.kt)
+- [`android/app/src/main/java/com/jstorrent/app/search/SearchPluginFetchMediator.kt`](../../android/app/src/main/java/com/jstorrent/app/search/SearchPluginFetchMediator.kt)
 
 This is the sharpest Play-review risk in the current implementation. Even though the WebView itself blocks direct remote navigation, the overall feature still allows a plugin to fetch its source data over cleartext HTTP through the host mediator if the plugin manifest declares such a host.
 
@@ -224,7 +230,7 @@ This is the sharpest Play-review risk in the current implementation. Even though
 
 The manifest sets `android:usesCleartextTraffic="true"`:
 
-- [`android/app/src/main/AndroidManifest.xml`](/Users/kgraehl/code/jstorrent/android/app/src/main/AndroidManifest.xml)
+- [`android/app/src/main/AndroidManifest.xml`](../../android/app/src/main/AndroidManifest.xml)
 
 That may be justified for some torrent/network paths, but it weakens the security story for the search plugin feature unless the plugin path is separately constrained.
 

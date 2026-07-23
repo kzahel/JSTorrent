@@ -16,8 +16,8 @@ It is the normative source for:
 
 Machine-readable companions:
 
-- [io-daemon-control-opcodes.json](/Users/kgraehl/code/jstorrent/contracts/io-daemon-control-opcodes.json)
-- [io-daemon-conformance.json](/Users/kgraehl/code/jstorrent/contracts/io-daemon-conformance.json)
+- [io-daemon-control-opcodes.json](../../contracts/io-daemon-control-opcodes.json)
+- [io-daemon-conformance.json](../../contracts/io-daemon-conformance.json)
 
 ## Contract Metadata
 

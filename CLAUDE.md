@@ -131,7 +131,9 @@ JSTorrent ships as multiple products that share the same TypeScript engine but r
 
 **iOS App** (`ios/`): Native SwiftUI app with JavaScriptCore engine. Standalone — runs the full engine in-process with native TCP/UDP via Network.framework. Distributed via AltStore PAL (EU) and sideloading (App Store rejects torrent clients). Downloads run in foreground only (no background service equivalent on iOS).
 
-**Sandbox overview**: See `docs/architecture/sandbox-overview.md` for the current platform sandbox boundaries and search plugin / Google Play review notes.
+**Sandbox overview**: See
+`docs/topics/sandbox-and-search-plugin-trust-boundaries.md` for the current
+platform sandbox boundaries and search plugin / Google Play review notes.
 
 ### Pairing
 

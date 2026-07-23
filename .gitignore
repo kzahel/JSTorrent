@@ -73,10 +73,8 @@ desktop/installers/windows/Output/
 memory-magnet.txt
 memory-magnet2.txt
 
-# Local Android investigation artifacts
+# Local Android artifacts
 android/tmp/
-docs/investigations/android-memory-results/
-docs/design_docs/media-ecosystem.md
 
 # Generated iOS engine bundle
 ios/JSTorrent/Resources/engine.bundle.js

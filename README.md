@@ -80,7 +80,10 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for build instructions and project structur
 
 ## Documentation
 
-- [Search Plugins](docs/search-plugins.md) - Manifest structure, runtime API, result format, and the Internet Archive reference plugin
+- [Documentation](docs/README.md) - Living topics, normative contracts, protocol
+  references, and historical material
+- [Search Plugins](docs/topics/search-plugins.md) - Manifest structure, runtime
+  API, result format, and the Internet Archive reference plugin
 
 ## License
 

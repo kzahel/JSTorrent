@@ -74,7 +74,8 @@ The extension is a workspace package in the monorepo. Use `pnpm --filter extensi
 ```
 
 **Note:** BTEngine runs in the UI thread (not service worker) for better performance.
-See `docs/design/move-btengine-to-ui-thread.md` for the detailed design rationale.
+See `docs/archive/design/move-btengine-to-ui-thread.md` for the historical
+design rationale.
 
 ### 3.2 Key Components
 
@@ -387,9 +388,11 @@ See `.github/workflows/extension-ci.yml`
 
 ## 12. Related Documentation
 
-- `docs/design/move-btengine-to-ui-thread.md` - BTEngine in UI thread design
+- `docs/archive/design/move-btengine-to-ui-thread.md` - historical BTEngine in
+  UI thread design
 - `native-host/DESIGN.md` - Native stack architecture
-- `design_docs/io-daemon-websocket-detail.md` - Binary protocol spec
+- `docs/archive/design_docs/io-daemon-websocket-detail.md` - historical binary
+  protocol design
 - `packages/engine/docs/ARCHITECTURE-current.md` - BitTorrent engine
 - `.github/copilot-instructions.md` - AI coding context
 

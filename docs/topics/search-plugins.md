@@ -1,8 +1,17 @@
 # Search Plugins
 
+Topic: `search-plugins`
+
+Status: **living plugin authoring and runtime reference; last reconciled on
+2026-03-13**.
+
 JSTorrent search plugins are small JavaScript modules that provide torrent search results from a specific site or API. A plugin is installed from a URL, loaded in a sandbox, and asked to export a manifest plus a `search(ctx, input)` function.
 
-The current reference implementation is [search-plugins/internet-archive.js](/Users/kgraehl/code/jstorrent/search-plugins/internet-archive.js).
+The current reference implementation is
+[`search-plugins/internet-archive.js`](../../search-plugins/internet-archive.js).
+
+For platform isolation and policy implications, see
+[`sandbox-and-search-plugin-trust-boundaries.md`](sandbox-and-search-plugin-trust-boundaries.md).
 
 ## Plugin file structure
 
@@ -142,7 +151,8 @@ At least one of `magnetUrl` or `torrentUrl` should be provided so the result can
 
 The bundled Internet Archive example shows the intended structure and a realistic API-backed implementation:
 
-- File: [search-plugins/internet-archive.js](/Users/kgraehl/code/jstorrent/search-plugins/internet-archive.js)
+- File:
+  [`search-plugins/internet-archive.js`](../../search-plugins/internet-archive.js)
 - Manifest declares `archive.org` in `hosts` and exposes categories such as `movies`, `music`, `books`, and `software`
 - `search(ctx, input)` builds an `advancedsearch.php` query, calls `ctx.fetchJson(...)`, and emits torrent results from the API response
 - It uses `ctx.encode(...)` for URL construction and `ctx.log(...)` for run diagnostics

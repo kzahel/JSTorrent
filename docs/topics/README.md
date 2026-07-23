@@ -8,9 +8,7 @@ contracts, recurring problems, product decisions, implementation campaigns,
 status questions, or investigations. Prefer the smallest coherent topic whose
 direction can evolve independently.
 
-Adopt this convention incrementally. Existing architecture, design, research,
-and plan documents do not need to move here solely for consistency. Create or
-update a topic when:
+Create or update a topic when:
 
 - Work spans multiple commits or tactical slices.
 - Important decisions or invariants need a durable home.
@@ -19,14 +17,6 @@ update a topic when:
 - The user explicitly asks for a living topic.
 
 Do not create a topic for every small standalone change.
-
-## Documentation Roles
-
-- Architecture, design, and contract documents own durable system shape.
-- Research and investigation documents preserve evidence and findings.
-- Plan documents describe bounded proposed or scheduled execution.
-- Topic documents own current status, decisions, evidence, gaps, and direction
-  for a continuing concern.
 
 ## Topic Shape
 
@@ -48,3 +38,11 @@ same slug in a `Topic: <slug>` commit-message trailer where practical.
   deferred migration record for Android 17 local-network enforcement, including
   affected JSTorrent paths, permission UX, implementation boundaries, and
   release acceptance criteria.
+- [`ios-altstore-pal-distribution.md`](ios-altstore-pal-distribution.md):
+  current iOS alternative-distribution release workflow, safety invariants,
+  recovery path, and CI code map.
+- [`sandbox-and-search-plugin-trust-boundaries.md`](sandbox-and-search-plugin-trust-boundaries.md):
+  platform sandbox boundaries and the security and Google Play implications of
+  installable search plugins.
+- [`search-plugins.md`](search-plugins.md): current plugin manifest, runtime,
+  result, and reference-implementation contract.

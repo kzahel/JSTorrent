@@ -4,7 +4,7 @@
  * 2. Timeout handling via Torrent.cleanupStuckPieces() (not tested here - integration level)
  *
  * These tests verify the behavior documented in:
- * docs/tasks/2025-12-12-request-pipeline-bugs.md
+ * docs/archive/tasks/2025-12-12-request-pipeline-bugs.md
  *
  * Note: Request timeout handling was moved from ActivePieceManager.checkTimeouts() (30s interval)
  * to Torrent.cleanupStuckPieces() (500ms interval, 10s timeout). The torrent-level handler
