@@ -14,9 +14,41 @@ continuity would be valuable and the concern can evolve independently.
 
 Adopt this convention incrementally: do not reorganize existing documentation
 solely for consistency, and do not create a topic for every small standalone
-change. See `docs/topics/README.md` for document roles and topic shape. When a
-commit materially advances a documented topic, use its slug in a
-`Topic: <slug>` commit-message trailer where practical.
+change. See `docs/topics/README.md` for document roles and topic shape.
+
+## Commit Message Guidance
+
+Aim for a subject of 65 characters or fewer, and strictly wrap commit bodies at
+72 columns. Keep the subject as a scannable headline result for
+`git log --oneline`; put the motivating synthesis in the body.
+
+For non-trivial commits, preserve the intent behind the change rather than only
+describing the resulting diff. Include a concise synthesis of the originating
+instruction, or the motivating observation when the work was not user-prompted.
+Capture the parts that would help a human reviewer or future agent understand
+and approximately recreate the intended result:
+
+- The desired outcome and why it matters.
+- Important constraints and explicit non-goals.
+- The key implementation direction.
+- Relevant validation or evidence.
+- Deliberate deferrals or remaining boundaries.
+
+Prune digressions, secrets, and low-signal conversation details. Do not copy a
+verbatim or exhaustive transcript, and do not mention Claude, AI, or an AI
+assistant. Write the message as a human developer explaining the change to a
+future maintainer.
+
+Mechanical or small self-evident changes are exempt from the intent synthesis.
+Formatting-only commits, typo fixes, straightforward version bumps, and trivial
+renames may use a conventional one-line message.
+
+When a commit materially advances a documented topic or belongs to a related
+series, append one or more `Topic: <slug>` trailers. Reuse the exact topic slug
+across the series so `git log --grep "Topic: ..."` finds the chain. Use multiple
+trailers when one commit advances multiple topics; standalone commits with no
+expected follow-up do not need one. Treat `docs/topics/README.md` as the topic
+registry rather than maintaining a separate root-level topic log.
 
 ## Environment Setup
 
