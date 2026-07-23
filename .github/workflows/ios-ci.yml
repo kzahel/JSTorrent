@@ -194,8 +194,14 @@ jobs:
           fi
 
       # --- Submit for notarization and fetch ADP ---
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v9
+        with:
+          version: '0.9.18'
+          enable-cache: true
+
       - name: Install Python dependencies
-        run: python3 -m pip install --break-system-packages PyJWT cryptography
+        run: uv sync --project ios --locked
 
       - name: Submit for notarization and fetch ADP
         id: adp
@@ -205,7 +211,7 @@ jobs:
         run: |
           VERSION="${GITHUB_REF_NAME#ios-v}"
           BUILD_NUMBER=$(grep "CURRENT_PROJECT_VERSION" ios/project.yml | grep -o "[0-9]*")
-          python3 ios/scripts/fetch-adp.py \
+          uv run --project ios --locked python ios/scripts/fetch-adp.py \
             --key-path "$APPLE_API_KEY_PATH" \
             --key-id "$ASC_API_KEY_ID" \
             --issuer-id "$ASC_API_ISSUER_ID" \

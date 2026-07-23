@@ -1,0 +1,11 @@
+[project]
+name = "jstorrent-ios-release-tools"
+version = "0.1.0"
+description = "Locked Python tools for JSTorrent iOS release automation"
+requires-python = ">=3.12"
+dependencies = [
+    "pyjwt[crypto]",
+]
+
+[tool.uv]
+package = false

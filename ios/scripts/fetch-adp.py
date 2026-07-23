@@ -16,7 +16,7 @@ Prerequisites:
     (AltStore PAL marketplace added, app selected)
 
 Usage:
-    python3 fetch-adp.py \\
+    uv run --project ios python ios/scripts/fetch-adp.py \\
         --key-path ~/private_keys/AuthKey_XXX.p8 \\
         --key-id XXX \\
         --issuer-id YYY \\
@@ -38,7 +38,7 @@ try:
     import jwt
 except ImportError:
     print(
-        "ERROR: PyJWT not installed. Run: pip install PyJWT cryptography",
+        "ERROR: PyJWT not installed. Run: uv sync --project ios --locked",
         file=sys.stderr,
     )
     sys.exit(1)

@@ -1,9 +1,9 @@
 [project]
-name = "desktop"
+name = "jstorrent-desktop-tools"
 version = "0.1.0"
-description = "Add your description here"
+description = "Development and verification tools for JSTorrent Desktop"
 readme = "README.md"
-requires-python = ">=3.10"
+requires-python = ">=3.12"
 dependencies = [
     "requests>=2.32.5",
 ]

@@ -139,14 +139,14 @@ cargo audit
 
 ### 4. Python And uv Refresh
 
-- [ ] Move project Python pins from 3.10 to 3.12, subject to libtorrent
+- [x] Move project Python pins from 3.10 to 3.12, subject to libtorrent
   compatibility.
-- [ ] Fix the desktop Python project name and placeholder metadata mismatch.
-- [ ] Refresh and audit both uv lockfiles.
-- [ ] Give the iOS App Store Connect script a small locked uv project and
+- [x] Fix the desktop Python project name and placeholder metadata mismatch.
+- [x] Refresh and audit both uv lockfiles.
+- [x] Give the iOS App Store Connect script a small locked uv project and
   replace unpinned `pip install --break-system-packages` workflow steps with
   `uv run`.
-- [ ] Add immutable lock checks to relevant CI jobs.
+- [x] Add immutable lock checks to relevant CI jobs.
 
 Validation:
 
@@ -372,3 +372,24 @@ bindings used by Tauri's current Linux WebKit stack; seven are unmaintained
 macro/Unicode transitive crates; and one is the known `glib` iterator
 soundness warning. They have no compatible replacement in the current Tauri
 2 Linux graph and remain visible rather than being added to an ignore list.
+
+### Python And uv Update
+
+The desktop tools and engine integration suite now require Python 3.12. Their
+uv locks were rebuilt with current compatible dependencies, including
+libtorrent 2.0.13, aiohttp 3.14.3, requests 2.34.2, and websockets 16.1.1. The
+desktop project is now named `jstorrent-desktop-tools` and no longer carries
+placeholder package metadata.
+
+The App Store Connect helper now has its own `ios/pyproject.toml`, Python pin,
+and uv lock. Both iOS release workflows use uv 0.9.18 with `--locked` rather
+than mutating the hosted runner's system Python with an unpinned pip command.
+
+Validation:
+
+- all three `uv lock --check` commands passed
+- all three environments resolved and ran on Python 3.12
+- `pip-audit` reported no known vulnerabilities for any locked environment
+- the iOS helper parsed its command line in the locked environment
+- all 19 self-contained Python engine integration tests passed; the two
+  external-seeder cases remained explicitly skipped by their existing runner

@@ -36,8 +36,14 @@ jobs:
           chmod 600 "$KEY_PATH"
           echo "APPLE_API_KEY_PATH=$KEY_PATH" >> "$GITHUB_ENV"
 
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v9
+        with:
+          version: '0.9.18'
+          enable-cache: true
+
       - name: Install Python dependencies
-        run: python3 -m pip install --break-system-packages PyJWT cryptography
+        run: uv sync --project ios --locked
 
       - name: Fetch ADP from App Store Connect
         env:
@@ -45,7 +51,7 @@ jobs:
           ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
         run: |
           VERSION="${{ inputs.version }}"
-          python3 ios/scripts/fetch-adp.py \
+          uv run --project ios --locked python ios/scripts/fetch-adp.py \
             --key-path "$APPLE_API_KEY_PATH" \
             --key-id "$ASC_API_KEY_ID" \
             --issuer-id "$ASC_API_ISSUER_ID" \
