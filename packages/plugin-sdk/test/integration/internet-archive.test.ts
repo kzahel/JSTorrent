@@ -37,44 +37,36 @@ describe('Internet Archive plugin', () => {
   })
 
   describe('search (live)', () => {
-    it.skip(
-      'returns results for a movie search',
-      async () => {
-        const result = await runPlugin({
-          source,
-          input: { query: 'night of the living dead', category: 'movies' },
-          enforceHosts: true,
-          timeoutMs: 15000,
-        })
+    it.skip('returns results for a movie search', { timeout: 20000 }, async () => {
+      const result = await runPlugin({
+        source,
+        input: { query: 'night of the living dead', category: 'movies' },
+        enforceHosts: true,
+        timeoutMs: 15000,
+      })
 
-        expect(result.trace.ok).toBe(true)
-        expect(result.trace.results.length).toBeGreaterThan(0)
-        expect(result.trace.requests.length).toBeGreaterThan(0)
+      expect(result.trace.ok).toBe(true)
+      expect(result.trace.results.length).toBeGreaterThan(0)
+      expect(result.trace.requests.length).toBeGreaterThan(0)
 
-        for (const r of result.trace.results) {
-          const errors = validateSearchResult(r)
-          expect(errors).toEqual([])
-          expect(r.source).toBe('Internet Archive')
-          expect(r.torrentUrl).toMatch(/archive\.org/)
-        }
-      },
-      { timeout: 20000 },
-    )
+      for (const r of result.trace.results) {
+        const errors = validateSearchResult(r)
+        expect(errors).toEqual([])
+        expect(r.source).toBe('Internet Archive')
+        expect(r.torrentUrl).toMatch(/archive\.org/)
+      }
+    })
 
-    it(
-      'handles empty query gracefully',
-      async () => {
-        const result = await runPlugin({
-          source,
-          input: { query: '' },
-          enforceHosts: true,
-          timeoutMs: 10000,
-        })
+    it('handles empty query gracefully', { timeout: 15000 }, async () => {
+      const result = await runPlugin({
+        source,
+        input: { query: '' },
+        enforceHosts: true,
+        timeoutMs: 10000,
+      })
 
-        expect(result.trace.ok).toBe(false)
-        expect(result.trace.error?.phase).toBe('search')
-      },
-      { timeout: 15000 },
-    )
+      expect(result.trace.ok).toBe(false)
+      expect(result.trace.error?.phase).toBe('search')
+    })
   })
 })

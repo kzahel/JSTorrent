@@ -74,14 +74,14 @@ path review remain part of each update slice.
 
 ### 1. JavaScript Security Baseline
 
-- [ ] Apply low-risk direct security updates, including current compatible
+- [x] Apply low-risk direct security updates, including current compatible
   Solid, `bn.js`, and `happy-dom` releases.
-- [ ] Consolidate packages still on Vitest 1 onto the current Vitest line and
+- [x] Consolidate packages still on Vitest 1 onto the current Vitest line and
   remove the corresponding older Vite dependency path.
-- [ ] Remove unused `ts-node` if repository-wide usage remains absent.
-- [ ] Replace the unmaintained `npm-run-all` package with a maintained
+- [x] Remove unused `ts-node` if repository-wide usage remains absent.
+- [x] Replace the unmaintained `npm-run-all` package with a maintained
   equivalent.
-- [ ] Align workspace TypeScript ranges before deduplicating the lockfile.
+- [x] Align workspace TypeScript ranges before deduplicating the lockfile.
 - [ ] Update the website's affected Astro/Vite/Rollup/sharp dependency chain.
   Keep the Astro major migration isolated because it may require source or
   configuration changes.
@@ -265,3 +265,32 @@ Validation under Node 24.18.0 and pnpm 11.16.0:
 - workspace typechecks passed
 - workspace tests passed
 - focused workflow and manifest formatting passed
+
+### JavaScript Compatible Security Updates
+
+The first dependency slice updated Solid to 1.9.14, `bn.js` to 5.2.5,
+happy-dom to the mature patched 20.11.0 release, Vitest to 4.1.10, Vite 7 to
+7.3.6 where already used, TypeScript 5 to 5.9.3, and related compatible
+packages. It replaced `npm-run-all` with `npm-run-all2`, removed the unused
+`ts-node`, and deduplicated the lockfile.
+
+Vitest 4 required two mechanical test compatibility changes: test options now
+precede callbacks, and constructor mocks use constructable functions. The
+TypeScript alignment also replaced one `Array.prototype.at` call because the
+engine deliberately targets an older JavaScript library surface.
+
+pnpm 11 blocks exotic transitive sources by default. `playsvideo@0.4.7`
+intentionally depends on JSTorrent's subtitle-integration fork of mediabunny,
+so that sole edge is overridden to its previously locked immutable commit. The
+global exotic-subdependency switch must remain disabled until playsvideo
+publishes the integration through a registry dependency; the exact override
+prevents the upstream branch name from moving silently.
+
+Validation:
+
+- static checks and all workspace builds passed
+- 152 Vitest files passed across the engine and plugin SDK; the remaining
+  client, UI, and extension suites also passed
+- 2,109 tests passed and 1 live-network test remained intentionally skipped
+- the production audit fell from 57 paths to 42 paths: 19 high, 18 moderate,
+  and 5 low, all currently rooted in the Astro website dependency graph

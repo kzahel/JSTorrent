@@ -19,8 +19,8 @@
     "@jstorrent/engine": "workspace:*",
     "@jstorrent/client": "workspace:*",
     "@jstorrent/ui": "workspace:*",
-    "solid-js": "^1.9.0",
-    "@tanstack/solid-virtual": "^3.13.0",
+    "solid-js": "^1.9.14",
+    "@tanstack/solid-virtual": "^3.13.35",
     "uplot": "^1.6.32",
     "@tauri-apps/plugin-updater": "^2",
     "@tauri-apps/plugin-process": "^2"
@@ -29,10 +29,10 @@
     "@types/chrome": "^0.1.31",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",
-    "@vitejs/plugin-react": "^4.6.0",
+    "@vitejs/plugin-react": "^5.2.0",
     "vite-plugin-solid": "^2.11.0",
-    "typescript": "~5.8.3",
-    "vite": "^7.0.4",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.6",
     "@tauri-apps/cli": "^2"
   }
 }

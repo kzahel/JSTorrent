@@ -6,3 +6,9 @@ packages:
 allowBuilds:
   esbuild: true
   sharp: true
+# playsvideo uses a maintained subtitle-integration fork of mediabunny. Pin the
+# sole exotic transitive dependency below instead of following its branch name.
+blockExoticSubdeps: false
+overrides:
+  happy-dom: 20.11.0
+  'playsvideo@0.4.7>mediabunny': 'github:kzahel/mediabunny#cd3cd2beb9c122dfa6fa89edbd7a73f2fa9df7a0'

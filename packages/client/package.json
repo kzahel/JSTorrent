@@ -31,18 +31,18 @@
     "@jstorrent/plugin-sdk": "workspace:*",
     "@jstorrent/ui": "workspace:*",
     "playsvideo": "^0.4.7",
-    "zustand": "^5.0.12"
+    "zustand": "^5.0.14"
   },
   "peerDependencies": {
     "react": "^18.2.0"
   },
   "devDependencies": {
     "@types/chrome": "^0.1.31",
-    "@types/node": "^20.10.0",
+    "@types/node": "^24.13.3",
     "@types/react": "^18.2.37",
     "fake-indexeddb": "^6.0.0",
-    "happy-dom": "^20.0.0",
-    "typescript": "^5.2.2",
-    "vitest": "^1.0.0"
+    "happy-dom": "20.11.0",
+    "typescript": "^5.9.3",
+    "vitest": "^4.1.10"
   }
 }

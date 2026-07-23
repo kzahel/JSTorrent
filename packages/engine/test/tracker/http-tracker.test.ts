@@ -6,7 +6,7 @@ import { MinimalHttpClient } from '../../src/utils/minimal-http-client'
 // Mock MinimalHttpClient
 vi.mock('../../src/utils/minimal-http-client', () => {
   return {
-    MinimalHttpClient: vi.fn().mockImplementation(() => {
+    MinimalHttpClient: vi.fn().mockImplementation(function MockMinimalHttpClient() {
       return {
         get: vi.fn(),
       }

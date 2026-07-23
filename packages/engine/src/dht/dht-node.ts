@@ -672,7 +672,9 @@ export class DHTNode extends EventEmitter {
     const maxRetries = options.maxRetries ?? BOOTSTRAP_MAX_RETRIES
     if (stats.responsesReceived === 0 && maxRetries > 0) {
       for (let attempt = 1; attempt <= maxRetries; attempt++) {
-        const delay = BOOTSTRAP_RETRY_DELAYS[attempt - 1] ?? BOOTSTRAP_RETRY_DELAYS.at(-1)!
+        const delay =
+          BOOTSTRAP_RETRY_DELAYS[attempt - 1] ??
+          BOOTSTRAP_RETRY_DELAYS[BOOTSTRAP_RETRY_DELAYS.length - 1]!
         this.logger?.warn(
           `DHT bootstrap failed (0 responses), retrying in ${delay / 1000}s (attempt ${attempt}/${maxRetries})`,
         )
