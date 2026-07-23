@@ -1,6 +1,6 @@
 # 001: Repository Housekeeping
 
-Status: active.
+Status: completed.
 
 Refresh JSTorrent's aging dependencies and development infrastructure without
 combining the work with unrelated product migrations. This tactical is the
@@ -222,9 +222,9 @@ stale paths.
 - [x] Run the complete local gate set under the pinned Node version.
 - [x] Record final audit results and any narrowly justified residual findings
   in this tactical.
-- [ ] Mark each landed work item and this tactical completed.
-- [ ] Push the complete commit series.
-- [ ] Monitor every required hosted CI job and repair failures until green.
+- [x] Mark each landed work item and this tactical completed.
+- [x] Push the complete commit series.
+- [x] Monitor every required hosted CI job and repair failures until green.
 
 ## Acceptance Criteria
 
@@ -522,3 +522,28 @@ runners for both architectures, so the x86 target now runs on
 `macos-26-intel` while Apple Silicon remains on `macos-26`. This keeps the OS
 baseline consistent and removes unnecessary C/Rust cross-compilation from the
 release matrix.
+
+### Hosted CI Closeout
+
+The complete commit series was pushed to `main`. Path-scoped workflows ran
+across the final implementation commits, and every required gate completed
+successfully:
+
+- repository sanity, extension, Pages, Android CI, Android unit tests, and iOS
+  CI
+- native-host, IO-daemon, and Android IO-daemon conformance
+- the five-platform Tauri release matrix on Linux x64, Linux ARM64, Windows,
+  Apple Silicon macOS, and Intel macOS
+
+The first hosted pass found two CI-only infrastructure issues. Workflows
+initially referenced a nonexistent moving `astral-sh/setup-uv@v9` tag; commit
+`dc094e54` pinned the published `v9.0.0` tag, after which the affected
+repository-sanity, extension, Android-test, and iOS workflows passed. The first
+Tauri pass also attempted to cross-compile Intel sidecars on an arm64 macOS
+runner; commit `c9a19a16` selected GitHub's native `macos-26-intel` runner.
+The replacement Tauri run built all five targets successfully, including the
+previously failing Intel sidecar and app packaging steps.
+
+Tactical 001 is complete. Remaining warning-only findings and explicitly
+deferred migrations stay documented above rather than being silently folded
+into this campaign.
