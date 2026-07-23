@@ -1,132 +1,120 @@
-# desktop
+# JSTorrent Desktop
 
-Native subsystem for the JSTorrent Chrome extension on **Windows, macOS, and Linux**. Provides filesystem access, network sockets, and system integration (magnet links, .torrent file handling) that the browser cannot perform directly.
+`desktop/` contains the Rust native subsystem and the Tauri desktop product for
+macOS, Windows, and Linux.
 
-For **ChromeOS**, see [android](../android/) which provides similar functionality.
+The same binaries support two user configurations:
 
-## Architecture
-
-```
-Chrome Extension
-       ↓ Native Messaging
-jstorrent-host ──→ manages rpc-info.json
-       ↓ spawns
-jstorrent-io-daemon ←── HTTP/WebSocket ── Extension
-       ↑
-jstorrent-link-handler (OS-level magnet/torrent handler)
-```
-
-| Component | Description |
-|-----------|-------------|
-| **host** | Native messaging coordinator launched by Chrome. Manages io-daemon lifecycle and download roots. |
-| **io-daemon** | High-performance I/O process providing file and socket APIs via HTTP/WebSocket. |
-| **link-handler** | OS-level handler for magnet: links and .torrent files. |
-| **common** | Shared data structures and utilities. |
-
-See [DESIGN.md](DESIGN.md) for detailed architecture documentation.
-
-## Prerequisites
-
-- Rust toolchain (stable) - install via [rustup](https://rustup.rs/)
-- Python 3.9+ with [uv](https://docs.astral.sh/uv/) (for testing)
-
-## Building
-
-```bash
-# From desktop directory
-
-# Debug build
-cargo build
-
-# Release build
-cargo build --release
-
-# Build single component
-cargo build -p jstorrent-host
-```
-
-Binaries are output to `target/debug/` or `target/release/`.
-
-## Local Development Installation
-
-These scripts build and install in one step.
-
-### macOS
-```bash
-./scripts/install-local-macos.sh
-```
-Installs to `~/Library/Application Support/JSTorrent` and `~/Applications/JSTorrent.app`.
-
-### Linux
-```bash
-./scripts/install-local-linux.sh
-```
-
-### Windows
-```cmd
-scripts\install-local-windows.bat
-```
-
-## Testing
-
-The project uses Python integration tests via `uv`:
-
-```bash
-# Run all verification tests
-uv run verify_all.py
-
-# Run individual tests
-uv run verify_file_api_v2.py
-uv run verify_magnet.py
-uv run verify_hashing.py
-```
-
-## Building Installers
-
-```bash
-# macOS .pkg installer
-./scripts/build-macos-installer.sh
-
-# Linux installer
-./scripts/build-linux-installer.sh
-
-# Windows installer
-scripts\build-windows-installer.bat
-```
-
-## Configuration
-
-Config directory locations:
-- **macOS:** `~/Library/Application Support/jstorrent-native/`
-- **Linux:** `~/.config/jstorrent-native/`
-- **Windows:** `%LOCALAPPDATA%\jstorrent-native\`
-
-Key files:
-- `rpc-info.json` - Discovery metadata (ports, tokens, download roots)
-- `jstorrent-native.env` - Developer overrides (LAUNCH_URL, DEV_ORIGINS, LOGFILE)
-- `native-host.log`, `io-daemon.log`, `link-handler.log` - Log files
-
-### Enabling Logging
-
-Copy the example env file to your config directory to enable logging:
-
-```bash
-# macOS
-cp jstorrent-native.env.example ~/Library/Application\ Support/jstorrent-native/jstorrent-native.env
-
-# Linux
-cp jstorrent-native.env.example ~/.config/jstorrent-native/jstorrent-native.env
-
-# Windows (cmd)
-copy jstorrent-native.env.example %LOCALAPPDATA%\jstorrent-native\jstorrent-native.env
-```
-
-See `jstorrent-native.env.example` for available options.
+- The Chrome extension starts `jstorrent-host` through native messaging. The
+  host owns profiles and download roots and launches `jstorrent-io-daemon`.
+- The Tauri app bundles the shared React client with both sidecars, registers
+  the native messaging host, handles links and files, and can run standalone.
 
 ## Workspace
 
-Cargo workspace with shared dependencies (v0.1.5):
-- `tokio` - Async runtime
-- `axum` - HTTP/WebSocket server (io-daemon)
-- `serde`/`serde_json` - Serialization
-- `clap` - CLI argument parsing
+| Component | Role |
+| --- | --- |
+| `common` | Shared profile, path, and protocol data structures |
+| `host` | Native messaging bootstrap, profile ownership, roots, KV storage, and daemon lifecycle |
+| `io-daemon` | Authenticated HTTP/WebSocket file, socket, hash, media, and control services |
+| `tauri-app/src-tauri` | Desktop window, sidecar management, updater, tray, deep links, and browser registration |
+| `tauri-app` | Vite/React frontend that mounts `@jstorrent/client` |
+
+There is no separate tracked `jstorrent-link-handler` crate. Magnet and torrent
+file handling now live in the Tauri application and native host.
+
+## Prerequisites
+
+- Rust stable
+- Node.js and pnpm
+- Python 3.10+ and `uv` for Python tools
+- platform dependencies required by Tauri
+
+Install JavaScript dependencies from the repository root:
+
+```bash
+pnpm install
+```
+
+## Rust Build and Tests
+
+From `desktop/`:
+
+```bash
+cargo build --workspace
+cargo fmt --all -- --check
+cargo clippy --workspace -- -D warnings
+cargo test --workspace
+```
+
+Release sidecar binaries are written to `desktop/target/release/`.
+
+The shared protocol gates can be run from the repository root:
+
+```bash
+pnpm conformance:daemon
+pnpm conformance:native-host
+```
+
+## Tauri Development
+
+From the repository root:
+
+```bash
+pnpm --dir desktop/tauri-app tauri dev
+```
+
+The package's `tauri` script first builds and copies the host and IO-daemon
+sidecars with the names Tauri expects. Details of the resolution chain and
+stale-binary recovery are in
+[`tauri-app/SIDECARS.md`](tauri-app/SIDECARS.md).
+
+Local installation helpers:
+
+```bash
+desktop/scripts/install-local-linux-sidecars.sh
+desktop/scripts/install-local-tauri-linux.sh
+desktop/scripts/install-local-tauri-macos.sh
+desktop/scripts/install-local-tauri-pkg-macos.sh
+```
+
+Use the helper that matches whether the extension sidecars, standalone Tauri
+app, or macOS package is being tested.
+
+## Configuration and Logs
+
+| Platform | Configuration directory |
+| --- | --- |
+| macOS | `~/Library/Application Support/jstorrent-native/` |
+| Linux | `~/.config/jstorrent-native/` |
+| Windows | `%LOCALAPPDATA%\\jstorrent-native\\` |
+
+Important files include profile-scoped runtime information, the optional
+`jstorrent-native.env` developer override file, and
+`jstorrent-native-host.log` / `io-daemon.log`.
+
+[`jstorrent-native.env.example`](jstorrent-native.env.example) documents the
+supported local overrides.
+
+## Architecture and Contracts
+
+- [`docs/contracts/native-host-contract.md`](../docs/contracts/native-host-contract.md):
+  native messaging and profile behavior
+- [`docs/contracts/io-daemon-contract.md`](../docs/contracts/io-daemon-contract.md):
+  daemon HTTP/WebSocket behavior
+- [`docs/topics/sandbox-and-search-plugin-trust-boundaries.md`](../docs/topics/sandbox-and-search-plugin-trust-boundaries.md):
+  desktop capability and search-plugin boundaries
+
+Superseded desktop designs and installer plans are retained under
+`docs/archive/desktop/`.
+
+## Release
+
+Desktop releases use:
+
+```bash
+./scripts/release-tauri-app.sh <version>
+```
+
+The script commits, pushes, and tags the release. Read the
+[release topic](../docs/topics/releases.md) before running it.

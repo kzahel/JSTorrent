@@ -49,10 +49,10 @@ The `JSTEngine` class supports Node.js inspector flags for debugging with Chrome
 
 ```bash
 # Run a single test with inspector on default port
-NODE_INSPECT=9229 python test_recheck.py
+NODE_INSPECT=9229 uv run python test_recheck.py
 
 # Pause execution until debugger attaches (useful for debugging startup)
-NODE_INSPECT_BRK=9229 python test_recheck.py
+NODE_INSPECT_BRK=9229 uv run python test_recheck.py
 ```
 
 ### Connecting Chrome DevTools

@@ -38,7 +38,6 @@ export type {
 
 // Engine Manager types (implementations are platform-specific)
 export type { IEngineManager, StorageRoot, FileOperationResult } from './engine-manager/types'
-// Note: AndroidStandaloneEngineManager is exported from '@jstorrent/client/android'
 
 // React contexts
 export { EngineProvider, useAdapter, useEngine } from './context/EngineContext'

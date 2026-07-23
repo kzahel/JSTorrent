@@ -76,6 +76,7 @@ echo "Checking TypeScript..."
 run_quiet "typecheck" "$ROOT_DIR" "pnpm typecheck"
 run_quiet "eslint" "$ROOT_DIR" "pnpm lint"
 run_quiet "prettier" "$ROOT_DIR" "pnpm format"
+run_quiet "documentation" "$ROOT_DIR" "pnpm docs:check"
 run_quiet "vitest" "$ROOT_DIR" "pnpm test"
 
 echo ""

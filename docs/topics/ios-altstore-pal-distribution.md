@@ -5,9 +5,11 @@ Topic: `ios-altstore-pal-distribution`
 Status: **current operational release record, reconciled with the release
 scripts and workflows on 2026-07-23**.
 
-JSTorrent iOS is distributed through AltStore PAL in the EU. Apple rejects
-torrent clients from the App Store under guideline 5.2.3, so the release must
-use Apple's alternative-distribution notarization flow rather than App Store
+JSTorrent iOS is distributed through AltStore PAL. As of this reconciliation,
+the [AltStore developer site](https://developer.altstore.io/) describes PAL as
+available in the European Union, Japan, and Brazil. Apple rejects torrent
+clients from the App Store under guideline 5.2.3, so the release must use
+Apple's alternative-distribution notarization flow rather than App Store
 review.
 
 ## Release Invariants
@@ -118,3 +120,5 @@ The workflows expect these repository secrets:
   tested end to end.
 - 2026-07-23: The two overlapping iOS guides were reconciled with the current
   three-hour CI flow and consolidated into this topic.
+- 2026-07-23: Region wording was reconciled with AltStore's current developer
+  and download pages: EU, Japan, and Brazil.

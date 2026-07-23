@@ -1,7 +1,5 @@
 packages:
   - 'extension'
-  - 'desktop'
   - 'desktop/tauri-app'
   - 'packages/*'
-  - 'apps/*'
   - 'website'

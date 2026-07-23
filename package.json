@@ -4,9 +4,8 @@
   "type": "module",
   "workspaces": [
     "extension",
-    "native-host",
+    "desktop/tauri-app",
     "packages/*",
-    "apps/*",
     "website"
   ],
   "scripts": {
@@ -16,6 +15,7 @@
     "lint:fix": "eslint . --fix",
     "format:fix": "prettier --write . --log-level warn",
     "format": "prettier --check .",
+    "docs:check": "node scripts/check-docs.mjs",
     "test": "pnpm --recursive test",
     "test:python": "pnpm --filter @jstorrent/engine test:python",
     "conformance:daemon": "pnpm -C packages/engine run conformance:daemon",
@@ -35,7 +35,7 @@
     "benchmark:tick:emu:swarm:1gb": "android/scripts/benchmark-tick-emu.sh --peers 5 --size 1gb",
     "typecheck": "pnpm --recursive typecheck",
     "build": "pnpm --recursive build",
-    "check:static": "npm-run-all --parallel lint format typecheck",
+    "check:static": "npm-run-all --parallel lint format docs:check typecheck",
     "check:test": "npm-run-all --parallel test test:python",
     "checkall": "npm-run-all check:static check:test",
     "prepare": "husky"

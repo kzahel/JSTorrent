@@ -1,182 +1,134 @@
-# JSTorrent Monorepo
+# JSTorrent Development
 
-This repository contains the source code for JSTorrent, including the Chrome extension, native messaging host, and other related components.
+This is the maintainer entry point for the JSTorrent monorepo. Product
+architecture and user-facing capabilities are summarized in
+[`README.md`](README.md); continuing concerns and historical context are
+indexed from [`docs/README.md`](docs/README.md).
 
-Supporting ChromeOS, Mac, Windows, and Linux
+## Prerequisites
 
-## Repository Structure
+- Git with submodule support
+- Node.js 20 or newer
+- pnpm 9 through Corepack
+- Platform toolchains for the component being changed:
+  - Rust stable for `desktop/`
+  - JDK 17 and the Android SDK for `android/`
+  - Xcode and XcodeGen for `ios/`
+  - Python 3.10+ and `uv` for Python integration tests
 
-- `extension/`: Chrome extension source code.
-- `desktop/`: Native messaging host and IO daemon (Rust) source code.
-- `android/`: Android app (ChromeOS companion + standalone modes)
-- `apps/`: Mobile applications (React Native, Android, iOS).
-- `packages/`: Shared libraries and packages.
-- `website/`: Source for the JSTorrent website.
-- `infra/`: Infrastructure and API backend.
-- `scripts/`: Utility scripts.
+On the primary development machines, `source ~/.profile` loads the configured
+Java, Android, Rust, and other toolchain paths.
 
-### Getting Started
- 
- 1. **Install dependencies**:
-    ```bash
-    pnpm install
-    ```
- 
- 2. **Run checks**:
-    ```bash
-    pnpm checkall
-    ```
- 
- ### Development Commands
- 
- Run these commands from the repository root:
- 
- - **`pnpm lint`**: Lint all files (ESLint).
- - **`pnpm format`**: Format all files (Prettier).
- - **`pnpm test`**: Run unit tests for all packages.
- - **`pnpm typecheck`**: Run TypeScript checks for all packages.
- - **`pnpm build`**: Build all packages.
- - **`pnpm checkall`**: Run lint, format check, typecheck, and tests in parallel.
+## Repository Map
 
- ### Dev Mode Setup
+| Path | Role |
+| --- | --- |
+| `extension/` | Chrome MV3 service worker, pages, build, and browser integration |
+| `packages/engine/` | Shared TypeScript BitTorrent engine and Node CLI |
+| `packages/client/` | React client shared by the extension and Tauri app |
+| `packages/ui/` | React/Solid presentation components |
+| `packages/plugin-sdk/` | Search-plugin types, validation, and Node test runtime |
+| `desktop/` | Rust native host, IO daemon, shared crate, and Tauri desktop app |
+| `android/` | Native Compose app, QuickJS runtime, and ChromeOS companion daemon |
+| `ios/` | Native SwiftUI app, JavaScriptCore runtime, and release tooling |
+| `website/` | Astro website and browser-hosted client entry |
+| `contracts/` | Machine-readable native-host and IO-daemon contracts |
+| `docs/` | Living topics, normative contracts, reference material, and archive |
+| `scripts/` | Repository-level validation, release, deployment, and utility scripts |
+| `update-server/` | Product configuration for the external desktop update service |
 
- Running `pnpm dev` starts three processes in parallel:
-
- | Server | URL | Purpose |
- |--------|-----|---------|
- | website | http://localhost:3000 | Landing page, protocol handler |
- | extension dev:web | http://local.jstorrent.com:3001 | App UI with HMR |
- | extension dev:extension | - | Build watch for chrome://extensions |
-
- #### Prerequisites
-
- 1. **Add local.jstorrent.com to /etc/hosts**:
-    ```bash
-    echo "127.0.0.1 local.jstorrent.com" | sudo tee -a /etc/hosts
-    ```
-
- 2. **Configure DEV_ORIGINS for CORS** (after installing native host):
-    ```bash
-    mkdir -p ~/.config/jstorrent-native
-    echo "DEV_ORIGINS=http://local.jstorrent.com:3001" >> ~/.config/jstorrent-native/jstorrent-native.env
-    ```
-    Then restart the native host (close and reopen the extension).
-
- 3. **Load extension in Chrome**:
-    - Build once: `pnpm build`
-    - Go to `chrome://extensions`, enable Developer mode
-    - Click "Load unpacked" and select `extension/dist`
-
- #### Running Dev Mode
-
- ```bash
- pnpm dev
- ```
-
- This starts:
- - **Extension build watch**: Rebuilds on file changes (reload extension in Chrome to see changes)
- - **Web dev server with HMR**: Open http://local.jstorrent.com:3001/src/ui/app.html for hot-reloading UI development
-
- The web dev server communicates with the extension via `chrome.runtime.sendMessage` (using `externally_connectable`), so the extension must be installed and running.
-
- ### Extension
- 
- The Chrome extension is located in the `extension/` directory.
- 
- #### Build
- 
- ```bash
- pnpm build
- # or specifically for extension:
- pnpm --filter extension build
- ```
- 
- The build artifacts will be in `extension/dist`.
-
- Load as an unpacked extension in chrome://extensions from the extension/dist folder.
-
- #### Test
- 
- ```bash
- pnpm test
- # or specifically for extension:
- pnpm --filter extension test
- ```
- 
- To run end-to-end tests (Playwright):
- 
- ```bash
- pnpm --filter extension test:e2e
- ```
-
-### System Bridge (Native Host)
-
-The native messaging host and IO daemon are located in the `desktop/` directory.
-
-#### Prerequisites
-
-To build the Rust components, you need to have Rust and Cargo installed.
-
-**macOS:**
-```bash
-brew install rust
-```
-
-**Linux:**
-```bash
-sudo apt install cargo
-```
-
-On ubuntu you may need `libgtk-3-dev` installed with apt
-
-#### Build
+## Initial Setup
 
 ```bash
-cd desktop
-cargo build --release --workspace
+git submodule update --init --recursive
+corepack enable
+pnpm install
 ```
 
-The binaries will be located at:
-- `desktop/target/release/jstorrent-host`
-- `desktop/target/release/jstorrent-io-daemon`
-- `desktop/target/release/jstorrent-link-handler`
+The Android QuickJS module uses the `quickjs-ng` submodule, so builds from a
+fresh clone need the submodule initialization step.
 
-#### Test
+## Root Commands
+
+| Command | Purpose |
+| --- | --- |
+| `pnpm lint` | Run ESLint |
+| `pnpm format` | Check formatting with Prettier |
+| `pnpm format:fix` | Rewrite files with Prettier |
+| `pnpm docs:check` | Validate active documentation links, paths, and portability |
+| `pnpm typecheck` | Run workspace TypeScript checks |
+| `pnpm test` | Run workspace unit tests |
+| `pnpm test:python` | Run engine Python integration tests |
+| `pnpm build` | Build workspace packages |
+| `pnpm checkall` | Run static checks and test suites |
+
+Use the smallest relevant package command while iterating, then run the
+repository checks appropriate to the final change.
+
+## Development Servers
+
+`pnpm dev` recursively starts every workspace with a `dev` script:
+
+- the Astro website at <http://localhost:3000>
+- the extension web UI at <http://local.jstorrent.com:3001>
+- the extension build watcher
+- the client TypeScript watcher
+- the Tauri frontend Vite server at <http://localhost:1420>
+
+For focused work, prefer a package command:
 
 ```bash
-cd desktop
-cargo test --workspace
+pnpm --filter jstorrent-extension dev
+pnpm --filter jstorrent-website dev
+pnpm --filter @jstorrent/client dev
 ```
 
-#### Verification Scripts
+The Tauri native application uses:
 
-There are several Python scripts in `desktop/` to verify the native components in isolation (simulating the browser extension).
-
-To run all verification scripts at once:
 ```bash
-cd desktop
-python3 verify_all.py
+pnpm --dir desktop/tauri-app tauri dev
 ```
 
-#### Local Installation
+For extension web development, map `local.jstorrent.com` to loopback:
 
-To install the native host locally for development (e.g., to test with a local Chrome extension):
-
-**Linux:**
-```bash
-./desktop/scripts/install-local-linux.sh
+```text
+127.0.0.1 local.jstorrent.com
 ```
-This builds the release binaries, creates the installer, and installs it to `~/.local/lib/jstorrent-native`. It also kills any running host process.
 
-**macOS:**
-```bash
-./desktop/scripts/install-local-macos.sh
+If the native daemon rejects the development origin, add this to the platform's
+`jstorrent-native.env` and restart the native host:
+
+```text
+DEV_ORIGINS=http://local.jstorrent.com:3001
 ```
-This builds the release binaries, creates the installer package, and installs it (requires `sudo`).
 
-## CI/CD
+Build the extension once and load `extension/dist` from
+`chrome://extensions` as an unpacked extension.
 
-Continuous Integration is handled via GitHub Actions. Workflows are located in `.github/workflows/`.
+## Platform Entry Points
 
-- **Extension CI**: Runs on changes to `extension/**` and `packages/**`.
-- **Native Host CI**: Runs on changes to `desktop/**` and `packages/**`.
+- [Chrome extension development](extension/README.md)
+- [Desktop and native-host development](desktop/README.md)
+- [Android and ChromeOS development](android/README.md)
+- [iOS development](ios/README.md)
+- [Engine package and CLI](packages/engine/README.md)
+- [Shared client package](packages/client/README.md)
+- [Search plugin SDK](packages/plugin-sdk/README.md)
+- [Website development](website/README.md)
+- [Release operations](docs/topics/releases.md)
+
+## CI
+
+GitHub Actions workflows under `.github/workflows/` are path-filtered by
+component. The main families cover:
+
+- repository static checks
+- extension build and Playwright tests
+- Android builds, unit tests, instrumentation tests, and conformance
+- Rust/native-host conformance
+- Tauri desktop installers and updater artifacts
+- iOS build, tests, notarization, and AltStore publication
+- engine and plugin SDK npm publication
+- website deployment to GitHub Pages
+
+The release topic maps each tag to its workflow and remaining manual steps.

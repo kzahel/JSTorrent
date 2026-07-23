@@ -1,153 +1,61 @@
-# @jstorrent/client
+# `@jstorrent/client`
 
-Glue layer between `@jstorrent/engine` and UI frameworks. Handles Chrome extension bridges, engine lifecycle, and provides React context/hooks.
+`@jstorrent/client` is the React application and platform bridge shared by the
+Chrome extension, Tauri desktop app, and browser-hosted client page. Android
+and iOS use native UIs and do not run this package as their application shell.
 
-## Architecture
+## Responsibilities
 
-```
-@jstorrent/client
-├── adapters/        # Engine access patterns
-│   └── types.ts     # EngineAdapter interface
-├── chrome/          # Chrome extension specific
-│   ├── engine-manager.ts      # Engine lifecycle, daemon connection
-│   ├── extension-bridge.ts    # Content script ↔ background messaging
-│   └── notification-bridge.ts # Download notifications
-├── context/
-│   └── EngineContext.tsx      # React context provider
-└── hooks/
-    └── useEngineState.ts      # React hook for engine state
-```
+- mount the shared React application
+- create and expose the in-page engine adapter
+- bootstrap desktop native messaging or ChromeOS companion IO
+- provide host-channel abstractions for Chrome and Tauri
+- manage settings, search plugins, notifications, and video playback
+- bridge React layout to the high-frequency Solid tables in `@jstorrent/ui`
 
-## EngineAdapter Interface
+## Entry Points
 
-The adapter pattern abstracts engine access for different environments:
+| Export | Intended use |
+| --- | --- |
+| `@jstorrent/client` | Full Chrome/Tauri application and browser integrations |
+| `@jstorrent/client/core` | Chrome-free contexts, hooks, types, and application content |
+| `@jstorrent/client/video-popup` | Standalone video popup component |
 
-```ts
-interface EngineAdapter {
-  readonly torrents: Torrent[]
-  readonly numConnections: number
-  
-  addTorrent(data: string | Uint8Array, opts?: AddTorrentOptions): Promise<Torrent | null>
-  removeTorrent(torrent: Torrent): Promise<void>
-  getTorrent(hash: string): Torrent | undefined
-  
-  on(event: string, callback: Function): void
-  off(event: string, callback: Function): void
-  destroy(): void
-}
-```
+## Source Map
 
-| Implementation | Use Case |
-|---------------|----------|
-| DirectEngineAdapter | Engine in same JS heap (extension, website, Android) |
-| RpcEngineAdapter | Engine over HTTP/WebSocket (iOS, remote control) |
+- `src/App.tsx`: platform-aware application wrapper
+- `src/AppContent.tsx`: Chrome-free shared application content
+- `src/engine-manager/`: daemon-backed engine lifecycle
+- `src/host/`: Chrome and Tauri host channels
+- `src/context/`: engine, configuration, and search-plugin React contexts
+- `src/hooks/`: engine state, bootstrap, configuration, and bridge hooks
+- `src/search/`: plugin service, sandbox host, validation utilities, and types
+- `src/components/`: shell, settings, search, system bridge, and playback UI
 
-## Chrome Extension Usage
+## Development
 
-```tsx
-import { EngineProvider, useEngineState, engineManager } from '@jstorrent/client'
+From the repository root:
 
-// Initialize engine (connects to io-daemon)
-const engine = await engineManager.init()
-
-// Wrap app
-<EngineProvider engine={engine}>
-  <App />
-</EngineProvider>
-
-// In components
-function MyComponent() {
-  const { adapter, torrents, numConnections, globalStats } = useEngineState()
-  
-  // adapter.torrents updates live (read by Solid RAF loop)
-  // torrents is React state snapshot (for conditionals)
-}
+```bash
+pnpm --filter @jstorrent/client build
+pnpm --filter @jstorrent/client typecheck
+pnpm --filter @jstorrent/client test
+pnpm --filter @jstorrent/client dev
 ```
 
-## Engine Manager
+`dev` runs the TypeScript compiler in watch mode. Use the extension or Tauri
+development command to run the actual application.
 
-`engineManager` handles:
+## Environment Boundaries
 
-- Daemon WebSocket connection
-- Engine instantiation with browser adapters
-- Session persistence setup
-- Storage root initialization
+- The Chrome extension imports the full package and supplies Chrome native
+  messaging and notification capabilities.
+- The Tauri app imports the same full application and registers Tauri URL
+  opening before mounting it.
+- Browser-hosted surfaces should prefer `@jstorrent/client/core` when Chrome
+  APIs are unavailable.
+- Native Android and iOS frontends communicate directly with
+  `@jstorrent/engine` through their embedded JavaScript runtimes.
 
-```ts
-// Singleton - call once at app startup
-const engine = await engineManager.init()
-
-// Access anywhere after init
-engineManager.engine  // BtEngine instance
-```
-
-## Extension Bridge
-
-For communication between extension contexts:
-
-```ts
-import { extensionBridge } from '@jstorrent/client'
-
-// In popup/tab - relay messages to service worker
-extensionBridge.sendToBackground({ type: 'ADD_TORRENT', magnet: '...' })
-
-// In service worker - handle messages
-extensionBridge.onMessage((msg) => { ... })
-```
-
-## Notification Bridge
-
-Desktop notifications for download events:
-
-```ts
-import { notificationBridge } from '@jstorrent/client'
-
-// Setup listeners
-notificationBridge.init(engine)
-
-// Triggers notifications on:
-// - Download complete
-// - Metadata received (for magnet links)
-```
-
-## React Context
-
-`EngineContext` provides:
-
-```ts
-{
-  engine: BtEngine           // Raw engine instance
-  adapter: EngineAdapter     // Abstracted access
-}
-```
-
-## useEngineState Hook
-
-Returns reactive state for React components:
-
-```ts
-const {
-  adapter,           // For passing to Solid tables
-  torrents,          // Torrent[] snapshot (React state)
-  numConnections,    // number
-  globalStats: {
-    totalDownloadRate,  // bytes/sec
-    totalUploadRate,    // bytes/sec
-  }
-} = useEngineState()
-```
-
-**Note:** `torrents` is a React state snapshot, updated periodically. For live 60fps updates, Solid tables read `adapter.torrents` directly via RAF loop.
-
-## Environment Support
-
-| Environment | Adapter | Notes |
-|------------|---------|-------|
-| Chrome Extension | Direct | Engine + daemon in extension process |
-| jstorrent.com | Direct | Engine in page, relayed to extension |
-| iOS App | RPC | SwiftUI frontend, engine on desktop |
-| Android App | Direct | Engine in React Native (Hermes) |
-
-## No Node.js APIs
-
-This package is browser-only. ESLint enforces `import/no-nodejs-modules`.
+Search-plugin contracts and examples live in
+[`docs/topics/search-plugins.md`](../../docs/topics/search-plugins.md).

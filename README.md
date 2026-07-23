@@ -14,7 +14,7 @@ A modern, full-featured BitTorrent client built on a shared TypeScript engine th
 | **Chrome Extension** | ✅ Available | [Chrome Web Store](https://chromewebstore.google.com/detail/jstorrent/dbokmlpefliilbjldladbimlcfgbolhk) — Chrome, Edge, Brave, and other Chromium browsers |
 | **Android** | ✅ Available | [Google Play](https://play.google.com/store/apps/details?id=com.jstorrent.app) — native app with QuickJS engine |
 | **ChromeOS** | ✅ Available | [Extension](https://chromewebstore.google.com/detail/jstorrent/dbokmlpefliilbjldladbimlcfgbolhk) + [Android companion app](https://play.google.com/store/apps/details?id=com.jstorrent.app), or [Crostini setup help](https://jstorrent.com/#no-play-store) |
-| **iOS** | ✅ Available | [AltStore PAL](https://altstore.io) (EU & Japan) or [sideload](https://github.com/kzahel/JSTorrent/releases) |
+| **iOS** | ✅ Available | [AltStore PAL](https://altstore.io) (EU, Japan, and Brazil) or [sideload](https://github.com/kzahel/JSTorrent/releases) |
 
 ## Architecture
 
@@ -70,7 +70,7 @@ One TypeScript BitTorrent engine powers all platforms. Platform-specific native 
 
 ## About
 
-JSTorrent started as a [Chrome App](https://github.com/kzahel/jstorrent-legacy-app), was rebuilt as a Chrome Extension when Apps were deprecated, and has since expanded to Android and desktop platforms—all sharing the same TypeScript engine.
+JSTorrent started as a [Chrome App](https://github.com/kzahel/jstorrent-legacy-app), was rebuilt as a Chrome Extension when Apps were deprecated, and has since expanded to Android, iOS, and desktop platforms—all sharing the same TypeScript engine.
 
 Written in TypeScript with comprehensive test coverage, including integration tests against [libtorrent](https://github.com/arvidn/libtorrent).
 
@@ -84,6 +84,8 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for build instructions and project structur
   references, and historical material
 - [Search Plugins](docs/topics/search-plugins.md) - Manifest structure, runtime
   API, result format, and the Internet Archive reference plugin
+- [Releases](docs/topics/releases.md) - Component scripts, CI behavior, manual
+  publication steps, and recovery rules
 
 ## License
 

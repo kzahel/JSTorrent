@@ -41,6 +41,8 @@ same slug in a `Topic: <slug>` commit-message trailer where practical.
 - [`ios-altstore-pal-distribution.md`](ios-altstore-pal-distribution.md):
   current iOS alternative-distribution release workflow, safety invariants,
   recovery path, and CI code map.
+- [`releases.md`](releases.md): current component release scripts, tag and CI
+  behavior, manual publication boundaries, safety checks, and recovery rules.
 - [`sandbox-and-search-plugin-trust-boundaries.md`](sandbox-and-search-plugin-trust-boundaries.md):
   platform sandbox boundaries and the security and Google Play implications of
   installable search plugins.

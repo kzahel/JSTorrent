@@ -16,3 +16,7 @@ When guidance changes, update the relevant topic or contract instead of adding
 another point-in-time plan. Archive material can explain why something was
 built, but it must not be treated as the current source of truth without
 reconciling it against the implementation.
+
+Run `pnpm docs:check` after changing active documentation. The check validates
+local links, referenced repository scripts, and accidental machine-specific
+absolute paths.

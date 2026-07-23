@@ -1,138 +1,61 @@
-# @jstorrent/ui
+# `@jstorrent/ui`
 
-Presentational UI components for JSTorrent. High-performance virtualized tables using Solid.js, mountable from React.
+`@jstorrent/ui` provides JSTorrent's shared presentation components, virtualized
+tables, settings hooks, and formatting utilities. The extension, Tauri app, and
+browser-hosted client consume its TypeScript source directly.
 
-## Architecture
+React owns the application layout and component lifecycle. High-frequency
+tables mount Solid components through `TableMount`, read current engine data
+through callbacks, and refresh with a throttled animation-frame loop. This
+keeps rapidly changing torrent and peer data out of React state.
 
-```
-React Shell (app.tsx)
-    │
-    ├── TorrentTable ──► TableMount ──► VirtualTable.solid.tsx
-    │                         │
-    └── DetailPane            └── Solid component with RAF loop
-        ├── PeerTable              reads engine data every frame
-        └── PieceTable
-```
+## Package Surface
 
-**Key principle:** React controls layout and which components exist. Solid controls live data display.
+- `src/components/`: detail panes, dialogs, menus, file selection, toasts,
+  speed graphs, and piece visualization
+- `src/tables/`: torrent, peer, swarm, file, piece, tracker, disk, and log
+  tables plus the React-to-Solid mount
+- `src/hooks/`: persisted layout, selection, theme, scale, and frame-rate
+  settings
+- `src/storage/`: browser storage abstraction for UI settings
+- `src/utils/`: formatting, country flags, and animation-frame throttling
+- `src/styles.css`: shared application theme and layout styles
 
-## File Conventions
+The detail pane currently supports general, tracker, peer, swarm, file, piece,
+disk, search, log, speed, and DHT views. Not every internal table is exported
+as a standalone public component; use [`src/index.ts`](src/index.ts) as the
+package API.
 
-- `*.tsx` - React components
-- `*.solid.tsx` - Solid components (Vite routes these to solid-js compiler)
+## Table Model
 
-## Tables
-
-All tables use a shared `VirtualTable.solid.tsx` core with different column definitions:
-
-| Table | Data Source | Key |
-|-------|-------------|-----|
-| TorrentTable | `adapter.torrents` | `infoHashStr` |
-| PeerTable | `torrent.peers` | `ip:port` |
-| PieceTable | computed from `torrent.bitfield` | piece index |
-
-### How RAF Updates Work
+`TableMount` bridges a React parent to the Solid `VirtualTable`. Callers supply
+row and selection getters so the table always reads the latest values:
 
 ```tsx
-// VirtualTable.solid.tsx
-const [tick, forceUpdate] = createSignal({}, { equals: false })
-
-const rows = () => {
-  tick()  // Subscribe to RAF signal
-  return props.getRows()  // Read fresh data from engine
-}
-
-onMount(() => {
-  const loop = () => {
-    forceUpdate({})  // Triggers re-read of rows()
-    rafId = requestAnimationFrame(loop)
-  }
-  rafId = requestAnimationFrame(loop)
-})
-```
-
-The signal must be **read** (not just set) for Solid to track dependencies.
-
-### Column Config
-
-Column visibility and widths persist to sessionStorage:
-
-```
-jstorrent:columns:torrents  → TorrentTable config
-jstorrent:columns:peers     → PeerTable config
-jstorrent:columns:pieces    → PieceTable config
-```
-
-## Components
-
-### TorrentTable
-
-```tsx
-<TorrentTable
-  source={adapter}              // Must have .torrents array
-  selectedHashes={Set<string>}  // For highlight
-  onSelectionChange={(hashes) => ...}
-  onRowDoubleClick={(torrent) => ...}
+<TableMount
+  getRows={() => source.rows}
+  getRowKey={(row) => row.id}
+  columns={columns}
+  storageKey="example"
+  getSelectedKeys={() => selectedKeys}
+  onSelectionChange={setSelectedKeys}
 />
 ```
 
-### DetailPane
+Column visibility, width, ordering, and sort settings persist per storage key.
+The refresh loop respects the application's maximum-FPS setting and reduces
+work when a table has no active rows.
 
-```tsx
-<DetailPane
-  source={adapter}           // Must have .getTorrent(hash) method
-  selectedHash={string|null} // Single selection only
-/>
+## Development
+
+From the repository root:
+
+```bash
+pnpm --filter @jstorrent/ui test
+pnpm --filter @jstorrent/ui test:watch
+pnpm lint
 ```
 
-Shows tabs: Peers, Pieces, Files, Trackers
-
-### TableMount (React → Solid bridge)
-
-```tsx
-<TableMount<T>
-  getRows={() => data}        // Called every RAF frame
-  getRowKey={(row) => string} // Unique key
-  columns={ColumnDef<T>[]}    // Column definitions
-  storageKey="name"           // For column config persistence
-  rowHeight={28}              // Pixels
-/>
-```
-
-## Adding a New Table
-
-1. Create `packages/ui/src/tables/FooTable.tsx`:
-
-```tsx
-import { TableMount } from './mount'
-import { ColumnDef } from './types'
-
-const fooColumns: ColumnDef<FooData>[] = [
-  { id: 'name', header: 'Name', getValue: (f) => f.name, width: 200 },
-  // ...
-]
-
-export function FooTable(props: { source: FooSource }) {
-  return (
-    <TableMount<FooData>
-      getRows={() => props.source.getFoos()}
-      getRowKey={(f) => f.id}
-      columns={fooColumns}
-      storageKey="foos"
-    />
-  )
-}
-```
-
-2. Export from `index.ts`
-3. Add tab in `DetailPane.tsx`
-
-## Utilities
-
-```tsx
-import { formatBytes, formatSpeed, formatPercent, formatDuration } from '@jstorrent/ui'
-
-formatBytes(1536)      // "1.5 KB"
-formatSpeed(1048576)   // "1.0 MB/s"
-formatPercent(0.756)   // "75.6%"
-```
+The package does not have a standalone build. Vite compiles React and Solid JSX
+for the consuming application; the workspace `typecheck` command records the
+package's intentional JSX-transform skip.

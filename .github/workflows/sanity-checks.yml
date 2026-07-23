@@ -37,6 +37,9 @@ jobs:
       - name: Format check
         run: pnpm run format
 
+      - name: Documentation check
+        run: pnpm run docs:check
+
       - name: Typecheck
         run: pnpm run typecheck
 

@@ -1,102 +1,40 @@
 # Windows Code Signing
 
-Signs Windows binaries and installers with Azure Trusted Signing using `trusted-signing-cli`.
+The Tauri release workflow signs Windows bundles with Azure Trusted Signing
+through `trusted-signing-cli`.
 
-## Prerequisites
+## CI
 
-1. **Rust toolchain** (for installing the CLI)
-2. **Azure credentials** (3 environment variables)
+[`tauri-app-ci.yml`](../../.github/workflows/tauri-app-ci.yml) enables signing
+when these repository secrets are configured:
 
-No DLLs, no signtool.exe, no .NET runtime, no Windows SDK required.
+- `AZURE_CLIENT_ID`
+- `AZURE_TENANT_ID`
+- `AZURE_CLIENT_SECRET`
 
-## One-Time Setup
+The endpoint, signing account, and certificate profile are supplied by the
+workflow's Tauri `signCommand`. Credential values must not be committed.
 
-### 1. Install trusted-signing-cli
+## Local Single-File Signing
+
+Install the CLI:
 
 ```powershell
 cargo install trusted-signing-cli
 ```
 
-### 2. Set up credentials
-
-Copy `.env.example` to `.env` and fill in `AZURE_CLIENT_SECRET`:
-
-```powershell
-cp .env.example .env
-# Edit .env and add your secret VALUE (not the secret ID!)
-```
-
-The `.env` file contains:
-- `AZURE_CLIENT_ID` - App Registration client ID
-- `AZURE_TENANT_ID` - Azure AD tenant ID
-- `AZURE_CLIENT_SECRET` - Client secret VALUE (expires 12/19/2027)
-
-If you don't have the secret value, create a new one:
-Azure Portal -> App Registration -> Certificates & secrets -> New client secret.
-Copy the VALUE immediately (shown only once).
-
-## Usage
-
-### Load credentials and build with signing
-
-```powershell
-# From desktop/ directory
-. .\windows_signing\load-signing-env.ps1
-
-$env:SIGN_BINARIES = "1"
-.\scripts\build-windows-installer.ps1
-```
-
-This will:
-1. Build all Rust binaries
-2. Sign each binary (jstorrent-host, jstorrent-io-daemon, jstorrent-link-handler)
-3. Create the Inno Setup installer
-4. Sign the installer
-
-### Sign a single binary
+Copy `.env.example` to the ignored `.env`, add the credential values, and load
+them:
 
 ```powershell
 . .\windows_signing\load-signing-env.ps1
-.\windows_signing\sign-binary.ps1 -FilePath "target\release\jstorrent-host.exe"
 ```
 
-### Build without signing
+Sign one binary or installer:
 
 ```powershell
-.\scripts\build-windows-installer.ps1
+.\windows_signing\sign-binary.ps1 -FilePath "path\to\artifact.exe"
 ```
 
-## CI
-
-Signing is enabled in `.github/workflows/system-bridge-ci.yml` when `AZURE_CLIENT_SECRET` is configured as a GitHub secret. CI uses the same `trusted-signing-cli` tool and Azure endpoint.
-
-Required GitHub secrets:
-- `AZURE_CLIENT_ID`
-- `AZURE_TENANT_ID`
-- `AZURE_CLIENT_SECRET`
-
-## Azure Configuration
-
-- **Endpoint**: `https://eus.codesigning.azure.net` (East US)
-- **Account**: `kylegraehl`
-- **Certificate profile**: `jstorrent-profile`
-- **Required role**: App Registration needs "Trusted Signing Certificate Profile Signer" on the Trusted Signing Account
-
-## Troubleshooting
-
-| Issue | Solution |
-|-------|----------|
-| 403 Forbidden | Check env vars are set; verify secret VALUE not ID; check IAM role |
-| "Invalid client secret" | You're using the secret ID instead of the VALUE |
-| Endpoint error | Verify endpoint matches Azure Portal -> Trusted Signing Account -> Account URI |
-| `trusted-signing-cli` not found | Run `cargo install trusted-signing-cli` |
-
-## Files
-
-| File | Purpose |
-|------|---------|
-| `sign-binary.ps1` | Sign a single binary |
-| `load-signing-env.ps1` | Load Azure credentials from `.env` |
-| `.env.example` | Template for credentials |
-| `.env` | Your credentials (gitignored) |
-| `signing/` | Deprecated (old signtool.exe + DLL approach) |
+The Tauri workflow is the source of truth for release signing. These local
+scripts are diagnostic helpers, not a separate installer build pipeline.

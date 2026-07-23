@@ -1,421 +1,174 @@
-# android
+# JSTorrent for Android
 
-Kotlin I/O daemon for JSTorrent on ChromeOS (and experimental Android standalone).
+The Android project ships one application with two runtime modes:
 
-Provides TCP/UDP sockets, file I/O, and hashing over HTTP/WebSocket. The BitTorrent engine runs in the browser; this app only handles low-level I/O.
+- **Standalone:** a native Jetpack Compose UI runs the shared TypeScript engine
+  in-process through QuickJS-NG. Kotlin JNI bindings provide file, TCP, UDP,
+  hashing, configuration, and lifecycle services.
+- **ChromeOS companion:** the app exposes authenticated HTTP and WebSocket IO
+  services so the Chrome extension can run the engine in its browser UI.
 
-## Requirements
+The mode is selected by the application and can also be changed from the UI.
+Standalone Android is a shipping product, not an experimental browser wrapper.
 
-- Android Studio (Arctic Fox or later)
-- Android SDK 26+ (minSdk)
-- ADB (comes with Android Studio)
-- A ChromeOS device with Android container, or Android device/emulator
+## Project Layout
 
-## Project Setup
+| Module | Role |
+| --- | --- |
+| `app` | Compose UI, application lifecycle, QuickJS bindings, persistence, playback, and search plugins |
+| `quickjs-engine` | Kotlin/JNI wrapper around the QuickJS-NG submodule |
+| `io-core` | Reusable socket, file, hashing, and binary protocol implementation |
+| `companion-server` | Ktor HTTP/WebSocket adapter used by ChromeOS companion mode |
 
-```bash
-# Clone and open in Android Studio
-git clone <repo>
-cd android
+The authoritative SDK and application versions are in
+[`app/build.gradle.kts`](app/build.gradle.kts).
 
-# Initialize submodules (required for quickjs-engine)
-git submodule update --init --recursive
+## Prerequisites
 
-# Open in Android Studio: File → Open → select this folder
-```
+- JDK 17
+- Android SDK and platform tools
+- Android Studio or the command-line Gradle workflow
+- initialized QuickJS-NG submodule
 
-Sync Gradle when prompted.
-
-## Building
-
-### Debug Build
-
-```bash
-./gradlew assembleDebug
-```
-
-APK output: `app/build/outputs/apk/debug/app-debug.apk`
-
-### Release Build
-
-```bash
-./gradlew assembleRelease
-```
-
-Requires signing config in `app/build.gradle.kts`.
-
-### QuickJS Engine Module
-
-The quickjs-engine module requires the QuickJS-NG submodule to be initialized before building.
-
-```bash
-# Initialize submodule (if not done during clone)
-git submodule update --init android/quickjs-engine/src/main/cpp/quickjs-ng
-
-# Build the module (compiles native C code for all ABIs)
-./gradlew :quickjs-engine:build
-
-# Run unit tests only
-./gradlew :quickjs-engine:test
-
-# Build just the AAR (debug)
-./gradlew :quickjs-engine:assembleDebug
-
-# Build just the AAR (release)
-./gradlew :quickjs-engine:assembleRelease
-```
-
-The build compiles native libraries for three Android ABIs:
-- `arm64-v8a` (64-bit ARM, most modern devices)
-- `armeabi-v7a` (32-bit ARM, older devices)
-- `x86_64` (Intel/AMD, emulators)
-
-AAR output: `quickjs-engine/build/outputs/aar/`
-
-## Installing
-
-```bash
-# Debug build to connected device
-./gradlew installDebug
-
-# Or manually
-adb install app/build/outputs/apk/debug/app-debug.apk
-```
-
-## Running
-
-Launch the app from the device. It starts an HTTP/WebSocket server on port 7800.
-
-On ChromeOS, the extension connects to `http://100.115.92.2:7800`.
-
-On Android standalone, open `http://localhost:7800` in a browser.
-
-## Logging
-
-### View all app logs
-
-```bash
-adb logcat -s JSTorrent:V
-```
-
-### Filter by tag
-
-```bash
-# WebSocket only
-adb logcat -s JSTorrent.WS:V
-
-# HTTP only  
-adb logcat -s JSTorrent.HTTP:V
-
-# Sockets only
-adb logcat -s JSTorrent.Socket:V
-```
-
-### Clear and follow
-
-```bash
-adb logcat -c && adb logcat -s JSTorrent:V
-```
-
-### Save to file
-
-```bash
-adb logcat -s JSTorrent:V > debug.log
-```
-
-## Log Tags
-
-| Tag | Component |
-|-----|-----------|
-| `JSTorrent` | General / startup |
-| `JSTorrent.WS` | WebSocket server |
-| `JSTorrent.HTTP` | HTTP endpoints |
-| `JSTorrent.Socket` | TCP/UDP socket operations |
-| `JSTorrent.File` | File read/write |
-| `JSTorrent.Hash` | SHA1 hashing |
-
-## Testing with curl
-
-Once the app is running:
-
-```bash
-# Check if daemon is up (from device or adb shell)
-curl http://localhost:7800/status
-
-# Hash some bytes
-echo -n "hello" | curl -X POST --data-binary @- http://localhost:7800/hash/sha1 | xxd
-```
-
-From ChromeOS Chrome DevTools:
-
-```javascript
-// Test connection
-fetch('http://100.115.92.2:7800/status').then(r => r.text()).then(console.log)
-```
-
-## Pairing with Extension
-
-The extension initiates pairing by opening:
-
-```
-intent://pair?token=<random>#Intent;scheme=jstorrent;package=com.jstorrent;end
-```
-
-The app receives the token via intent filter and stores it. Subsequent WebSocket connections must send this token in the AUTH handshake.
-
-## Architecture
-
-The codebase is split into four Gradle modules:
-
-```
-┌──────────────────────────────────────────────────────────────────┐
-│  app module (com.jstorrent.app)                                  │
-│  ├── Activities: MainActivity, StandaloneActivity, AddRoot...   │
-│  ├── Service: IoDaemonService (foreground service)              │
-│  ├── Mode: ModeDetector (companion vs standalone routing)       │
-│  ├── Auth: TokenStore (SharedPreferences)                       │
-│  ├── Storage: RootStore, DownloadRoot                           │
-│  └── Bridges: KVBridge, RootsBridge (WebView JS interfaces)     │
-└──────────────────────────────────────────────────────────────────┘
-                         │ depends on
-          ┌──────────────┼──────────────┐
-          ▼              ▼              ▼
-┌─────────────────────────┐    ┌─────────────────────────────────┐
-│  companion-server       │    │  io-core                         │
-│  (HTTP/WebSocket layer) │    │  (Pure I/O, no HTTP deps)        │
-│                         │    │                                   │
-│  • CompanionHttpServer  │    │  • TcpSocketService               │
-│  • IoWebSocketHandler   │    │  • UdpSocketManagerImpl           │
-│  • ControlWebSocketHandler│  │  • FileManagerImpl                │
-│  • FileRoutes           │    │  • Protocol (opcodes, framing)    │
-│  • SocketManagerFactory │    │  • Hasher (SHA1/SHA256)           │
-└─────────────────────────┘    └─────────────────────────────────┘
-          │ depends on                    │
-          └───────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────┐
-│  quickjs-engine (com.aspect.aspect.engine)                       │
-│  (JavaScript engine via QuickJS-NG)                              │
-│                                                                   │
-│  • QuickJSEngine.kt      - Kotlin API for JS evaluation          │
-│  • quickjs_jni.cpp       - JNI bindings to QuickJS-NG            │
-│  • quickjs-ng/           - Git submodule (C library)             │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Module Responsibilities
-
-- **io-core**: Pure I/O library with zero HTTP dependencies. Contains TCP/UDP socket services, file manager, protocol definitions, and hashing utilities. Designed for reuse with future Hermes JS engine integration.
-
-- **companion-server**: HTTP/WebSocket adapter layer using Ktor. Wraps io-core operations and exposes them over WebSocket for the Chrome extension.
-
-- **app**: Android-specific code including Activities, Services, storage, and authentication.
-
-- **quickjs-engine**: Embedded JavaScript engine using QuickJS-NG. Provides a Kotlin API for evaluating JavaScript code natively on Android via JNI bindings. This enables running the JSTorrent engine directly on Android without a WebView.
-
-## Key Files
-
-```
-app/src/main/java/com/jstorrent/app/
-├── MainActivity.kt           # Companion mode UI, mode routing
-├── StandaloneActivity.kt     # Standalone WebView app
-├── service/
-│   └── IoDaemonService.kt    # Foreground service, starts server
-├── mode/
-│   └── ModeDetector.kt       # ChromeOS vs Android detection
-├── auth/
-│   └── TokenStore.kt         # Pairing token storage
-├── storage/
-│   ├── RootStore.kt          # Download roots persistence
-│   └── DownloadRoot.kt       # Root data class
-└── CompanionServerDepsImpl.kt # Wires app deps to companion-server
-
-companion-server/src/main/java/com/jstorrent/companion/server/
-├── CompanionHttpServer.kt    # Ktor HTTP/WS server
-├── IoWebSocketHandler.kt     # Socket multiplexing over WS
-├── ControlWebSocketHandler.kt# Control plane (events, roots)
-├── FileRoutes.kt             # /read, /write endpoints
-└── SocketManagerFactory.kt   # Creates per-session socket services
-
-io-core/src/main/java/com/jstorrent/io/
-├── protocol/Protocol.kt      # Opcodes, framing
-├── socket/
-│   ├── TcpSocketService.kt   # TCP connection management
-│   ├── UdpSocketManagerImpl.kt# UDP socket management
-│   └── *Callback.kt          # Event callbacks
-├── file/
-│   ├── FileManager.kt        # Interface
-│   └── FileManagerImpl.kt    # SAF file I/O
-└── hash/Hasher.kt            # Hashing utilities
-
-quickjs-engine/src/main/
-├── java/com/aspect/aspect/engine/
-│   └── QuickJSEngine.kt      # Kotlin API for JS evaluation
-└── cpp/
-    ├── CMakeLists.txt        # Native build config
-    ├── quickjs_jni.cpp       # JNI bindings
-    └── quickjs-ng/           # Git submodule (QuickJS-NG source)
-```
-
-## Endpoints
-
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/` | HTML shell (Android standalone) |
-| GET | `/status` | Daemon status JSON |
-| WS | `/io` | TCP/UDP multiplexing |
-| GET | `/read/{root}` | Read file bytes |
-| POST | `/write/{root}` | Write file bytes |
-| POST | `/hash/sha1` | SHA1 hash bytes |
-
-See `chromeos-strategy.md` for full protocol details.
-
-## Troubleshooting
-
-### Can't connect from Chrome on ChromeOS
-
-1. Check app is running: `adb shell ps | grep jstorrent`
-2. Check port is listening: `adb shell netstat -tlnp | grep 7800`
-3. Check extension has `host_permissions` for `http://100.115.92.2/*`
-
-### Connection refused
-
-Port 7800 may be in use. Check logcat for actual port:
-
-```bash
-adb logcat -s JSTorrent:V | grep "listening"
-```
-
-### WebSocket disconnects immediately
-
-Check AUTH token matches. The extension and app must have paired first.
-
-### Daemon dies in background
-
-On some devices, battery optimization kills the service. Either:
-- Show a foreground notification (recommended)
-- Request user to disable battery optimization for the app
-
-### quickjs-engine build fails with "Cannot find source file: quickjs-ng/cutils.c"
-
-The QuickJS-NG submodule is not initialized:
+From the repository root:
 
 ```bash
 git submodule update --init android/quickjs-engine/src/main/cpp/quickjs-ng
 ```
 
-## Local Emulator Development (No Android Studio)
+If the local SDK path is not supplied by `ANDROID_HOME`, create an untracked
+`android/local.properties` containing:
 
-### Quick Start
+```text
+sdk.dir=/absolute/path/to/Android/Sdk
+```
+
+## Build and Install
+
+Run Gradle commands from `android/`:
 
 ```bash
-# One-time setup (downloads SDK, creates phone + tablet AVDs)
+./gradlew :app:assembleDebug
+./gradlew :app:installDebug
+./gradlew :app:assembleRelease
+./gradlew :app:bundleRelease
+```
+
+Debug APK:
+`app/build/outputs/apk/debug/app-debug.apk`
+
+The release build requires the signing properties used by CI or the local
+Play Store bundle helper.
+
+## Tests
+
+The test wrapper separates device-free, instrumented, and end-to-end suites:
+
+```bash
+./scripts/test.sh
+./scripts/test.sh --integration
+./scripts/test.sh --e2e --start-seeder
+./scripts/test.sh --all --start-seeder
+```
+
+Use `--device SERIAL` to select a non-emulator device. Direct Gradle gates used
+during normal Kotlin work are:
+
+```bash
+./gradlew :app:compileDebugKotlin
+./gradlew testDebugUnitTest
+```
+
+## Emulator and Device Helpers
+
+One-time command-line emulator setup:
+
+```bash
 ./scripts/setup-emulator.sh
-
-# Add to ~/.zshrc (setup script prints the exact lines)
-export ANDROID_HOME="$HOME/.android-sdk"
-export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
-
-# Start phone emulator (default)
-./scripts/emu-start.sh
-
-# Or start tablet emulator
-AVD_NAME=jstorrent-tablet ./scripts/emu-start.sh
-
-# Build and install APK
-./scripts/emu-install.sh
-
-# Watch logs
-./scripts/emu-logs.sh
 ```
 
-### Shell Integration
-
-Source the environment script for convenience aliases:
-
-```bash
-source scripts/android-env.sh
-
-# Now you can use:
-emu start     # Start emulator
-emu stop      # Stop emulator
-emu install   # Build and install
-emu logs      # Watch logs
-emu phone     # Start phone emulator
-emu tablet    # Start tablet emulator
-```
-
-### Phone vs Tablet
-
-Two AVDs are created by setup:
-
-| AVD Name | Device | Use Case |
-|----------|--------|----------|
-| `jstorrent-dev` | Pixel 6 (phone) | Default, quick iteration |
-| `jstorrent-tablet` | Pixel Tablet | ChromeOS-like form factor |
-
-Switch between them:
-
-```bash
-# Using env var
-AVD_NAME=jstorrent-tablet ./scripts/emu-start.sh
-
-# Or with shell integration (source android-env.sh first)
-emu phone    # Start phone
-emu tablet   # Start tablet
-```
-
-Only one emulator runs at a time. `emu-stop.sh` stops whichever is running.
-
-### Disk Usage
-
-Approximate sizes:
-- Command-line tools: ~150MB
-- Platform tools: ~50MB
-- Emulator: ~400MB
-- System image: ~1.2GB
-- AVD phone (created): ~2-4GB
-- AVD tablet (created): ~2-4GB
-
-Total: ~6-10GB
-
-### Known Emulator Limitations
-
-**UDP does not work in the Android emulator.** This is a known Android emulator limitation. DHT and UDP trackers will not function when running in the emulator.
-
-While Linux has a workaround using host TAP network interfaces, the setup is complex and not recommended. For testing UDP functionality (DHT, UDP trackers), use a real Android device or ChromeOS with the Android container.
-
-## UI Mode (Standalone Full vs Light)
-
-The app supports two UI modes:
-
-| Mode | HTML Path | Description |
-|------|-----------|-------------|
-| `standalone` (default) | `standalone/standalone.html` | Lightweight UI |
-| `full` | `standalone_full/standalone_full.html` | Full-featured UI |
-
-The last used mode is saved and restored automatically on next launch.
-
-### Switching UI Mode
-
-Pass `ui_mode` as an intent extra:
-
-```bash
-# Full UI (saves preference)
-adb shell am start -n com.jstorrent.app/.StandaloneActivity --es ui_mode full
-
-# Light UI (saves preference)
-adb shell am start -n com.jstorrent.app/.StandaloneActivity --es ui_mode standalone
-
-# Use last saved mode
-adb shell am start -n com.jstorrent.app/.StandaloneActivity
-```
-
-With shell integration:
+Load the helper commands:
 
 ```bash
 source scripts/android-env.sh
 emu start
 emu install
-adb shell am start -n com.jstorrent.app/.StandaloneActivity --es ui_mode full
+emu logs
 ```
+
+Real-device aliases use `~/.jstorrent-devices`; copy the format from
+[`scripts/devices.example`](scripts/devices.example), then use `dev list`,
+`dev install NAME`, and `dev logs NAME`.
+
+ChromeOS-specific deployment is handled from the repository root:
+
+```bash
+./scripts/deploy-android-chromebook.sh
+```
+
+## Logging and Debugging
+
+Useful logcat tags include:
+
+- `JSTorrent-JS` for JavaScript console output
+- `EngineController` and `JsThread` for engine lifecycle and latency
+- `TcpBindings`, `UdpBindings`, and `FileBindings` for native IO
+- `JSTorrent-Debug` for debug-broadcast output
+
+With one device connected:
+
+```bash
+adb logcat --pid=$(adb shell pidof com.jstorrent.app)
+```
+
+The debug build exposes an ADB broadcast receiver:
+
+```bash
+adb shell am broadcast \
+  -a com.jstorrent.DEBUG \
+  --es cmd status \
+  -p com.jstorrent.app
+```
+
+Other supported commands include `torrents`, `peers`, `swarm`, `dht`, `eval`,
+`loglevel`, and `help`.
+
+## Architecture Entry Points
+
+- [`NativeStandaloneActivity.kt`](app/src/main/java/com/jstorrent/app/NativeStandaloneActivity.kt):
+  standalone Compose application entry
+- [`JSTorrentApplication.kt`](app/src/main/java/com/jstorrent/app/JSTorrentApplication.kt):
+  process-level service and engine ownership
+- [`EngineServiceRepository.kt`](app/src/main/java/com/jstorrent/app/viewmodel/EngineServiceRepository.kt):
+  UI access to the engine service
+- [`IoDaemonService.kt`](app/src/main/java/com/jstorrent/app/service/IoDaemonService.kt):
+  companion foreground service
+- [`CompanionServerDepsImpl.kt`](app/src/main/java/com/jstorrent/app/CompanionServerDepsImpl.kt):
+  application wiring for companion mode
+- [`AndroidSearchPluginSandboxHost.kt`](app/src/main/java/com/jstorrent/app/search/AndroidSearchPluginSandboxHost.kt):
+  local WebView search-plugin sandbox
+
+The normative companion protocol is
+[`docs/contracts/io-daemon-contract.md`](../docs/contracts/io-daemon-contract.md).
+Platform sandbox and search-plugin boundaries are tracked in
+[`docs/topics/sandbox-and-search-plugin-trust-boundaries.md`](../docs/topics/sandbox-and-search-plugin-trust-boundaries.md).
+
+## QuickJS Native-Bridge Invariant
+
+The JNI `setGlobalFunction` bridge can return booleans as the strings `"true"`
+and `"false"`. JavaScript callers of `__jstorrent_*` functions must not use
+truthiness checks on those values because `"false"` is truthy. Compare
+explicitly:
+
+```ts
+result === true || result === 'true'
+```
+
+The native binding declarations intentionally use `string | boolean` where
+this ambiguity exists.
+
+## Release
+
+Android releases are created with `./scripts/release-android.sh <version>`.
+Read the [release topic](../docs/topics/releases.md) before running it; the
+script commits, pushes, and tags the release.
