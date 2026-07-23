@@ -15,13 +15,15 @@ on:
         type: string
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   finalize:
     runs-on: macos-15
+    permissions:
+      contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: main
 

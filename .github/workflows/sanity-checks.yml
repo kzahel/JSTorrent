@@ -5,25 +5,63 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
   sanity-checks:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install pnpm
-        uses: pnpm/action-setup@v3
+        uses: pnpm/action-setup@v6
         with:
-          version: 9
+          version: 11.16.0
 
       - name: Use Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
           node-version: '24'
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install
+        run: pnpm install --frozen-lockfile
+
+      - name: Audit production JavaScript dependencies
+        run: pnpm audit --prod
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v9
+        with:
+          version: '0.9.18'
+          enable-cache: true
+
+      - name: Check Python locks
+        run: |
+          uv lock --project desktop --check
+          uv lock --project packages/engine/integration/python --check
+          uv lock --project ios --check
+
+      - name: Audit Python dependencies
+        run: |
+          audit_dir="$(mktemp -d)"
+          trap 'rm -rf "$audit_dir"' EXIT
+          for project in desktop packages/engine/integration/python ios; do
+            requirements="$audit_dir/$(echo "$project" | tr '/' '-').txt"
+            uv export \
+              --project "$project" \
+              --locked \
+              --no-emit-project \
+              --output-file "$requirements"
+            uvx \
+              --python 3.12 \
+              --from pip-audit==2.10.1 \
+              pip-audit \
+              --requirement "$requirements" \
+              --require-hashes \
+              --disable-pip
+          done
 
       - name: Rebuild native modules
         run: pnpm rebuild

@@ -172,12 +172,12 @@ integration Python tests used by the root workspace.
   advertised supported major.
 - [x] Upgrade pnpm after Node 24 is active and validate the resulting lockfile.
 - [x] Pin a Rust toolchain for release reproducibility.
-- [ ] Update maintained GitHub Actions to current supported majors.
-- [ ] Use `pnpm install --frozen-lockfile` consistently in CI.
-- [ ] Replace direct uv installer piping with the maintained setup action.
-- [ ] Default workflow permissions to `contents: read` and grant write only to
+- [x] Update maintained GitHub Actions to current supported majors.
+- [x] Use `pnpm install --frozen-lockfile` consistently in CI.
+- [x] Replace direct uv installer piping with the maintained setup action.
+- [x] Default workflow permissions to `contents: read` and grant write only to
   jobs that publish, tag, or intentionally commit.
-- [ ] Add dependency-audit gates for pnpm, Cargo, and Python without adding
+- [x] Add dependency-audit gates for pnpm, Cargo, and Python without adding
   dependency-update automation.
 
 Validation includes every root static/test gate plus workflow syntax review and
@@ -393,3 +393,20 @@ Validation:
 - the iOS helper parsed its command line in the locked environment
 - all 19 self-contained Python engine integration tests passed; the two
   external-seeder cases remained explicitly skipped by their existing runner
+
+### CI Reproducibility And Audit Gates
+
+Maintained first-party actions now use their current supported majors:
+checkout 7, setup-node 7, setup-java 5, upload-artifact 7, cache 6, the Pages
+actions 5/6, Gradle actions 6, Android setup 4, pnpm setup 6, uv setup 9, and
+the GitHub release action 3. Pnpm is consistently 11.16.0 and every install is
+frozen.
+
+The disabled Android emulator jobs no longer contain a future copy-paste trap:
+their direct uv installer and Python 3.11 setup were replaced with the same
+locked Python 3.12 project used locally. Workflow defaults are read-only, with
+write permission confined to release/deployment jobs.
+
+The repository sanity gate now audits production JavaScript and all three
+Python locks. The Linux Tauri job runs the pinned Rust formatter and clippy
+gate and installs cargo-audit 0.22.2 for the Rust dependency gate.
