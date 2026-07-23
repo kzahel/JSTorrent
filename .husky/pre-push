@@ -1,21 +1,14 @@
-if [ -n "$VSCODE_GIT_IPC_HANDLE" ]; then
+if [ -n "${VSCODE_GIT_IPC_HANDLE:-}" ]; then
   # Skip husky pre-push when pushing from VSCode to avoid blocking issues
   exit 0
 fi
 
-
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"  # This loads nvm
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+if [ ! -s "$NVM_DIR/nvm.sh" ]; then
+  echo "NVM is required to run the pre-push checks." >&2
+  exit 1
+fi
 
-# pnpm
-export PNPM_HOME="$HOME/.local/share/pnpm"
-case ":$PATH:" in
-  *":$PNPM_HOME:"*) ;;
-  *) export PATH="$PNPM_HOME:$PATH" ;;
-esac
-# pnpm end
-
-
-
-pnpm run format
+. "$NVM_DIR/nvm.sh"
+nvm use --silent
+corepack pnpm run format

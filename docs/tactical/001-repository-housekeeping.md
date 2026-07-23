@@ -503,3 +503,9 @@ Android still emits the known Gradle 9 migration warning for deprecated Gradle
 8 APIs. The JavaScript lint warnings and Rust warning-only advisories predate
 this campaign and are visible in their respective tools; none is a failing
 security advisory or regression introduced by these updates.
+
+The first push attempt exposed one final local-toolchain inconsistency: the
+pre-push hook sourced NVM without selecting `.nvmrc`, then put a legacy pnpm 9
+installation first on `PATH`. The hook now selects the pinned Node version and
+invokes pnpm through Corepack, which resolves the repository's pinned
+11.16.0 release. Its formatting gate passes under that exact toolchain.
