@@ -142,9 +142,36 @@ ssh chromebook
 "$TESTBED" crostini-stop
 ```
 
-`crostini-start` launches `termina`/`penguin`, restores the post-reboot
-port-forwarding rule, and requires authenticated `ssh chromebook` before
-returning success.
+`crostini-start` launches the user-facing Terminal app, selects its `penguin`
+profile, requires ChromeOS to register `penguin.linux.test`, restores the
+post-reboot port-forwarding rule, and verifies authenticated `ssh chromebook`.
+
+The extension's no-Play-Store product route additionally requires the
+published installer. Run the exact user-facing command from that Terminal:
+
+```bash
+curl -fsSL https://jstorrent.com/install-crostini.sh | bash
+```
+
+The testbed deliberately does not start the container through `vmc` or LXD,
+because that lower-level route can leave `cros-garcon` without a security
+token, hostname resolution, or localhost tunneling. For a product assertion,
+still require both of these checks before opening the extension:
+
+```bash
+curl -fsS http://localhost:7800/health
+curl -fsS http://penguin.linux.test:7800/health
+```
+
+The 2026-07-24 physical run started with no installed daemon or pairing state,
+ran the exact public installer, force-stopped Android, cleared extension
+companion state, reset daemon pairing, and reopened the extension. Automatic
+discovery and pairing reached **Ready** at `penguin.linux.test:7800`; the panel
+reported **Crostini Daemon** and the fixed `Downloads` root. Installer syntax,
+published asset availability, fallback checksums, and local integrity tests
+also passed. A torrent payload transfer and actual ChromeOS Flex hardware
+remain separate coverage gaps. See
+[`../archive/reports/2026-07-24-chromeos-crostini-no-play-store-test.md`](../archive/reports/2026-07-24-chromeos-crostini-no-play-store-test.md).
 
 ## Reboots and Updates
 
