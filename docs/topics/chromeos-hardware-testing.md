@@ -93,6 +93,43 @@ machine:
 ./scripts/deploy-android-chromebook.sh --forward
 ```
 
+## Fresh-Install Acceptance Flow
+
+The physical acceptance test should cover the user-visible boundary that the
+emulator companion smoke test deliberately skips:
+
+1. Start signed in with the MV3 extension and `com.jstorrent.app` absent.
+2. Deploy and load `extension/dist` as an unpacked extension.
+3. Open JSTorrent, expose **Setup Required**, and follow **Get from Play
+   Store** into the native Play Store listing.
+4. Install the APK, then verify through ADB that the installer is
+   `com.android.vending`.
+5. Return to the extension, choose **Launch App**, accept Chrome's app chooser,
+   and approve the Android pairing request.
+6. Add a download root through the Storage Access Framework, including both
+   **Use this folder** and **Allow**.
+7. Require the extension to reach **Ready**, download the deterministic 100 MiB
+   fixture from `seed_for_test.py`, and compare the source and device SHA-256
+   values.
+
+The Play Store leg should remain a separate, lower-frequency acceptance test.
+The faster APK-development variant can replace steps 3-4 with a fresh
+`./scripts/deploy-android-chromebook.sh` install while retaining the chooser,
+pairing, SAF, transfer, and hash assertions.
+
+Uninstalling the APK clears private app state but not
+`Download/JSTorrent`. A deterministic fresh-install runner must use a unique
+test root or remove only its own named fixture. Do not recursively clear the
+shared download directory. Likewise, toolbar **Remove** currently removes the
+torrent from the session but leaves its downloaded file in place.
+
+The 2026-07-24 exploratory physical run passed this flow with extension 1.1.1,
+Play Store app 1.0.23, and a hash-verified 100 MiB transfer. It also established
+that the web-to-native Play Store handoff can leave Chrome in front, the launch
+intent produces an **Open with** confirmation, and Play Store/Android surfaces
+sometimes require desktop accessibility or absolute-pointer fallbacks. See
+[`../archive/reports/2026-07-24-chromeos-fresh-install-exploratory-test.md`](../archive/reports/2026-07-24-chromeos-fresh-install-exploratory-test.md).
+
 ## Optional Crostini
 
 Crostini is not part of normal extension or APK deployment. Start it only for
