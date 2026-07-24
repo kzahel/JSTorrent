@@ -7,6 +7,24 @@
 For maintainer-specific cross-project context, see
 `~/code/dotfiles/projects/README.md` when that checkout is available.
 
+## ChromeOS Hardware Testing
+
+The authoritative physical-device controller is the separate checkout at
+`~/code/chromeos-testbed`; do not add or revive a copied testbed inside this
+repository. Before ChromeOS hardware work, read
+`~/code/chromeos-testbed/skills/SKILL.md` and
+[`docs/topics/chromeos-hardware-testing.md`](docs/topics/chromeos-hardware-testing.md).
+
+Start with `~/code/chromeos-testbed/bin/chromeos doctor`. Use `chromeroot` for
+the ChromeOS host, UI automation, screenshots, DevTools, extension deployment,
+and ARCVM ADB. `chromebook` is the optional Crostini container; start it only
+when Linux-container access or shared files are actually needed.
+
+Use `./scripts/deploy-chromebook.sh` for the extension and
+`./scripts/deploy-android-chromebook.sh` for the APK. Do not follow ChromeOS
+deployment procedures under `docs/archive/` without reconciling them against
+the living topic and current scripts.
+
 ## Documentation Ownership
 
 Active documentation has four roles:

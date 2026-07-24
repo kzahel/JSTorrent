@@ -41,6 +41,20 @@ pnpm --filter jstorrent-extension test:e2e
 
 Build output is written to `extension/dist`.
 
+## ChromeOS Hardware
+
+Use the repository-level deployment entry point:
+
+```bash
+./scripts/deploy-chromebook.sh
+```
+
+It builds, deploys directly to ChromeOS Downloads through `chromeroot`, and
+reloads the unpacked extension through DevTools. It does not require Crostini.
+See the
+[ChromeOS hardware-testing topic](../docs/topics/chromeos-hardware-testing.md)
+for testbed ownership, first-load setup, UI assertions, and recovery.
+
 ## Packaging
 
 Create a Chrome Web Store ZIP without the development manifest key:

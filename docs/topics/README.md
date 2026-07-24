@@ -38,6 +38,9 @@ same slug in a `Topic: <slug>` commit-message trailer where practical.
   deferred migration record for Android 17 local-network enforcement, including
   affected JSTorrent paths, permission UX, implementation boundaries, and
   release acceptance criteria.
+- [`chromeos-hardware-testing.md`](chromeos-hardware-testing.md): current
+  physical-Chromebook testbed ownership, host roles, extension/APK deployment,
+  Crostini boundary, reboot recovery, and validation workflow.
 - [`ios-altstore-pal-distribution.md`](ios-altstore-pal-distribution.md):
   current iOS alternative-distribution release workflow, safety invariants,
   recovery path, and CI code map.

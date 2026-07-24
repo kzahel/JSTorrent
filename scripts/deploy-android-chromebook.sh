@@ -1,88 +1,79 @@
-#!/bin/bash
-# Deploy Android APK to Chromebook
+#!/usr/bin/env bash
+# Build and install the Android app on the ChromeOS testbed.
 #
 # Usage:
-#   ./scripts/deploy-android-chromebook.sh           # Deploy debug APK
-#   ./scripts/deploy-android-chromebook.sh release   # Deploy release APK
-#   ./scripts/deploy-android-chromebook.sh --forward # Deploy debug + port forwarding
-#   ./scripts/deploy-android-chromebook.sh release --forward
+#   ./scripts/deploy-android-chromebook.sh
+#   ./scripts/deploy-android-chromebook.sh release
+#   ./scripts/deploy-android-chromebook.sh --forward
 #
-# Port forwarding sets up SSH reverse tunnel + ADB reverse so Android app
-# can reach localhost:3000 dev server running on this machine.
+# --forward maps Android localhost:<port> through ChromeOS to the development
+# server on this machine.
 
-set -e
+set -euo pipefail
 
-CHROMEBOOK_HOST="${CHROMEBOOK_HOST:-chromebook}"
+REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+TESTBED_CLI="${CHROMEOS_TESTBED_CLI:-$HOME/code/chromeos-testbed/bin/chromeos}"
+CHROMEROOT_HOST="${CHROMEROOT_HOST:-chromeroot}"
 DEV_SERVER_PORT="${DEV_SERVER_PORT:-3000}"
 BUILD_TYPE="debug"
 SETUP_FORWARD=false
 
-# Parse arguments
 for arg in "$@"; do
-    case $arg in
-        --forward|-f)
-            SETUP_FORWARD=true
-            ;;
-        release)
-            BUILD_TYPE="release"
-            ;;
-        debug)
-            BUILD_TYPE="debug"
+    case "$arg" in
+        --forward|-f) SETUP_FORWARD=true ;;
+        release) BUILD_TYPE="release" ;;
+        debug) BUILD_TYPE="debug" ;;
+        *)
+            echo "Unknown argument: $arg" >&2
+            exit 2
             ;;
     esac
 done
 
-# Get remote home directory for path expansion
-REMOTE_HOME=$(ssh "$CHROMEBOOK_HOST" 'echo $HOME')
-# Use same project path structure on Chromebook crostini
-REMOTE_PROJECT_DIR="${REMOTE_PROJECT_DIR:-$REMOTE_HOME/code/jstorrent-monorepo/android}"
-# Full path to adb (needed for non-interactive SSH since .bashrc exits early)
-REMOTE_ADB="${REMOTE_ADB:-$REMOTE_HOME/android-sdk/platform-tools/adb}"
+if [[ ! -x "$TESTBED_CLI" ]]; then
+    echo "ChromeOS testbed CLI not found: $TESTBED_CLI" >&2
+    echo "Clone https://github.com/kzahel/chromeos-testbed to ~/code/chromeos-testbed." >&2
+    exit 1
+fi
 
-cd "$(dirname "$0")/../android"
+echo "Checking ChromeOS testbed..."
+"$TESTBED_CLI" doctor
 
-# Build APK
+cd "$REPO_DIR/android"
+
 echo "Building $BUILD_TYPE APK..."
-if [ "$BUILD_TYPE" = "release" ]; then
+if [[ "$BUILD_TYPE" == "release" ]]; then
     ./gradlew assembleRelease
-    APK_SUBPATH="app/build/outputs/apk/release/app-release.apk"
+    APK_PATH="$PWD/app/build/outputs/apk/release/app-release.apk"
 else
     ./gradlew assembleDebug
-    APK_SUBPATH="app/build/outputs/apk/debug/app-debug.apk"
+    APK_PATH="$PWD/app/build/outputs/apk/debug/app-debug.apk"
 fi
 
-# Create output directory on Chromebook and copy APK
-APK_DIR=$(dirname "$APK_SUBPATH")
-echo "Copying APK to $CHROMEBOOK_HOST:$REMOTE_PROJECT_DIR/$APK_SUBPATH..."
-ssh "$CHROMEBOOK_HOST" "mkdir -p \"$REMOTE_PROJECT_DIR/$APK_DIR\""
-scp "$APK_SUBPATH" "$CHROMEBOOK_HOST:$REMOTE_PROJECT_DIR/$APK_SUBPATH"
+echo "Installing APK through ChromeOS ARCVM ADB..."
+"$TESTBED_CLI" install-apk "$APK_PATH" --authorize
 
-# Install via adb on Chromebook
-echo "Installing APK on Chromebook..."
-ssh "$CHROMEBOOK_HOST" "$REMOTE_ADB install -r -t \"$REMOTE_PROJECT_DIR/$APK_SUBPATH\""
+if [[ "$SETUP_FORWARD" == true ]]; then
+    echo "Connecting ARCVM ADB..."
+    "$TESTBED_CLI" adb-connect
 
-echo "Done! Android app deployed and installed."
-
-# Set up port forwarding if requested
-if [ "$SETUP_FORWARD" = true ]; then
-    echo ""
-    echo "Setting up port forwarding for dev server (port $DEV_SERVER_PORT)..."
-
-    # Set up ADB reverse on Chromebook (Android localhost -> Chromebook localhost)
-    echo "Setting up ADB reverse tcp:$DEV_SERVER_PORT..."
-    ssh "$CHROMEBOOK_HOST" "$REMOTE_ADB reverse tcp:$DEV_SERVER_PORT tcp:$DEV_SERVER_PORT"
-
-    # Check if SSH tunnel already exists
-    if pgrep -f "ssh.*-R $DEV_SERVER_PORT:localhost:$DEV_SERVER_PORT.*$CHROMEBOOK_HOST" > /dev/null; then
-        echo "SSH reverse tunnel already running."
+    if pgrep -f \
+        "ssh.*-R $DEV_SERVER_PORT:localhost:$DEV_SERVER_PORT.*$CHROMEROOT_HOST" \
+        >/dev/null; then
+        echo "SSH reverse tunnel is already running."
     else
-        echo "Starting SSH reverse tunnel (local :$DEV_SERVER_PORT -> Chromebook :$DEV_SERVER_PORT)..."
-        # -f: background, -N: no command, -R: reverse tunnel
-        ssh -f -N -R "$DEV_SERVER_PORT:localhost:$DEV_SERVER_PORT" "$CHROMEBOOK_HOST"
-        echo "SSH tunnel started in background."
+        echo "Starting reverse tunnel through $CHROMEROOT_HOST..."
+        ssh -fNT -o ExitOnForwardFailure=yes \
+            -R "$DEV_SERVER_PORT:localhost:$DEV_SERVER_PORT" \
+            "$CHROMEROOT_HOST"
     fi
 
-    echo ""
-    echo "Port forwarding active! Android app can now reach localhost:$DEV_SERVER_PORT"
-    echo "To stop the SSH tunnel later: pkill -f 'ssh.*-R $DEV_SERVER_PORT.*$CHROMEBOOK_HOST'"
+    ssh "$CHROMEROOT_HOST" \
+        "export PATH=/bin:/usr/bin:/usr/local/bin:\$PATH; \
+         adb -s 127.0.0.1:5555 reverse \
+             tcp:$DEV_SERVER_PORT tcp:$DEV_SERVER_PORT"
+
+    echo "Android localhost:$DEV_SERVER_PORT now reaches this development machine."
 fi
+
+echo "Done. Android app deployed and installed."

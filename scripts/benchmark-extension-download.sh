@@ -16,7 +16,8 @@ PYTHON_DIR="$PROJECT_ROOT/packages/engine/integration/python"
 
 # Default CDP port
 CDP_PORT="${CDP_PORT:-9222}"
-CHROMEBOOK_HOST="${CHROMEBOOK_HOST:-chromebook}"
+CHROMEROOT_HOST="${CHROMEROOT_HOST:-chromeroot}"
+TUNNEL_STARTED=0
 
 echo "=== Extension Download Benchmark ==="
 
@@ -25,9 +26,9 @@ echo "Deploying extension to Chromebook..."
 "$SCRIPT_DIR/deploy-chromebook.sh"
 
 # Check if SSH tunnel is already running
-if ! nc -z localhost $CDP_PORT 2>/dev/null; then
+if ! nc -z localhost "$CDP_PORT" 2>/dev/null; then
     echo "Starting SSH tunnel for CDP (port $CDP_PORT)..."
-    ssh -f -N -L $CDP_PORT:127.0.0.1:9222 "$CHROMEBOOK_HOST"
+    ssh -f -N -L "$CDP_PORT:127.0.0.1:9222" "$CHROMEROOT_HOST"
     TUNNEL_STARTED=1
     sleep 1
 else
@@ -38,7 +39,7 @@ fi
 cleanup() {
     if [ "$TUNNEL_STARTED" = "1" ]; then
         echo "Stopping SSH tunnel..."
-        pkill -f "ssh.*-L $CDP_PORT.*$CHROMEBOOK_HOST" 2>/dev/null || true
+        pkill -f "ssh.*-L $CDP_PORT.*$CHROMEROOT_HOST" 2>/dev/null || true
     fi
 }
 trap cleanup EXIT

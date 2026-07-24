@@ -106,6 +106,11 @@ ChromeOS-specific deployment is handled from the repository root:
 ./scripts/deploy-android-chromebook.sh
 ```
 
+This builds locally and delegates ARCVM installation and authorization to
+`~/code/chromeos-testbed`; Crostini is not required. See the
+[ChromeOS hardware-testing topic](../docs/topics/chromeos-hardware-testing.md)
+for device setup, forwarding, and recovery.
+
 ## Logging and Debugging
 
 Useful logcat tags include:

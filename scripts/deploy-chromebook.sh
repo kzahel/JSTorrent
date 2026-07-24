@@ -1,64 +1,48 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# Build and deploy the unpacked extension to the ChromeOS testbed.
 #
-# Deploy extension to Chromebook for testing.
-# Run from dev laptop, not from Crostini.
+# The first load is manual in chrome://extensions:
+#   Downloads/jstorrent-extension
 #
-# Prerequisites:
-#   - SSH access: ssh chromebook works
-#   - CDP tunnel active: ssh -L 9222:127.0.0.1:9222 chromebook
-#   - Extension loaded once from ~/Downloads/crostini-shared/jstorrent-extension/
-#
-# Usage:
-#   ./scripts/deploy-chromebook.sh
-#
-set -e
-cd "$(dirname "$0")/.."
+# Environment overrides:
+#   CHROMEOS_TESTBED_CLI  Path to chromeos-testbed/bin/chromeos
+#   CHROMEROOT_HOST      SSH alias for the ChromeOS host
+#   CDP_PORT             Local CDP tunnel port
+#   JSTORRENT_EXTENSION_ID
 
-CHROMEBOOK_HOST="${CHROMEBOOK_HOST:-chromebook}"
-REMOTE_PATH="/mnt/chromeos/MyFiles/Downloads/crostini-shared/jstorrent-extension"
+set -euo pipefail
 
-# Warn if running from Crostini
-if [[ -f /etc/apt/sources.list.d/cros.list ]]; then
-    echo "Warning: Running from Crostini. This script is meant for external dev machines."
-    echo "   Press Ctrl+C to cancel, or wait 3s to continue anyway..."
-    sleep 3
+REPO_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+TESTBED_CLI="${CHROMEOS_TESTBED_CLI:-$HOME/code/chromeos-testbed/bin/chromeos}"
+CHROMEROOT_HOST="${CHROMEROOT_HOST:-chromeroot}"
+CDP_PORT="${CDP_PORT:-9222}"
+EXTENSION_ID="${JSTORRENT_EXTENSION_ID:-dbokmlpefliilbjldladbimlcfgbolhk}"
+
+if [[ ! -x "$TESTBED_CLI" ]]; then
+    echo "ChromeOS testbed CLI not found: $TESTBED_CLI" >&2
+    echo "Clone https://github.com/kzahel/chromeos-testbed to ~/code/chromeos-testbed." >&2
+    exit 1
 fi
+
+cd "$REPO_DIR"
+
+echo "Checking ChromeOS testbed..."
+"$TESTBED_CLI" doctor
 
 echo "Building extension..."
 pnpm build
 
-echo "Deploying to $CHROMEBOOK_HOST:$REMOTE_PATH/"
-
-# Create target directory if needed
-ssh "$CHROMEBOOK_HOST" "mkdir -p '$REMOTE_PATH'"
-
-rsync -av --delete \
-    --exclude='.git' \
-    --exclude='node_modules' \
-    extension/dist/ \
-    "$CHROMEBOOK_HOST:$REMOTE_PATH/"
-
-# Reload extension via CDP if tunnel is active
-CDP_PORT="${CDP_PORT:-9222}"
-if nc -z localhost "$CDP_PORT" 2>/dev/null; then
-    echo "Reloading extension via CDP..."
-    # Find service worker and trigger reload
-    python3 -c "
-import json
-import urllib.request
-import websocket
-
-# Get targets
-targets = json.loads(urllib.request.urlopen('http://localhost:$CDP_PORT/json').read())
-sw = next((t for t in targets if t.get('type') == 'service_worker' and 'dbokmlpefliilbjldladbimlcfgbolhk' in t.get('url', '')), None)
-if sw:
-    ws = websocket.create_connection(sw['webSocketDebuggerUrl'])
-    ws.send(json.dumps({'id': 1, 'method': 'Runtime.evaluate', 'params': {'expression': 'chrome.runtime.reload()'}}))
-    ws.close()
-    print('Extension reloaded')
-else:
-    print('Service worker not found, skipping reload')
-" 2>/dev/null || echo "CDP reload failed (websocket-client not installed?), manual reload may be needed"
+if ! nc -z localhost "$CDP_PORT" 2>/dev/null; then
+    echo "Starting Chrome DevTools tunnel on localhost:$CDP_PORT..."
+    ssh -fNT -o ExitOnForwardFailure=yes \
+        -L "$CDP_PORT:127.0.0.1:9222" \
+        "$CHROMEROOT_HOST"
 fi
 
-echo "Done! Extension deployed."
+echo "Deploying and reloading JSTorrent extension..."
+CDP_PORT="$CDP_PORT" "$TESTBED_CLI" deploy-ext \
+    extension/dist \
+    --name jstorrent-extension \
+    --reload "$EXTENSION_ID"
+
+echo "Done. Unpacked extension path: Downloads/jstorrent-extension"
