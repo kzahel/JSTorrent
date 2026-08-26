@@ -430,6 +430,8 @@ Record that distinction explicitly.
   limitations.
 - [x] Confirm the stable migration page is deployed before any Store package
   references it.
+- [ ] Deploy the approved user-facing copy revision and repeat the live route
+  and destination checks before Store publication.
 - [x] Prepare controlled-profile Store delivery checks for both existing item
   IDs.
 - [x] Stop before upload, submission, publication, listing edits, or rollout
@@ -477,7 +479,7 @@ on source changes.
 | Exact paid/Lite baseline reconciliation | complete | Google update artifacts fetched and hashed on 2026-08-26; paid/Lite executable trees are byte-identical. |
 | Campaign state and automated tests | complete | Ten focused Node tests cover activation, startup throttle, retry, reminder, acknowledgment, permanent stop, same-campaign preservation, explicit launch, variants, and platform routing. |
 | Notification and local migration UI | complete | Shared migration runtime replaces the unshipped maximum-nag experiment; startup is the sole automatic UI trigger and explicit launch opens a bounded local window. |
-| Stable website migration route | complete and deployed | Astro check/build and three focused tests pass. Desktop and 390 px Playwright renders were inspected; the ChromeOS query put Play and Crostini first and preserved only bounded attribution on outgoing links. GitHub Pages deployment `32960986953` completed successfully on 2026-08-26. The base route and attributed ChromeOS/Windows routes return 200, as do the desktop download target, Crostini installer, Google Play listing, and Chrome Web Store listing. |
+| Stable website migration route | deployed; user-facing revision pending redeploy | GitHub Pages deployment `32960986953` completed successfully on 2026-08-26, and every live route and destination returned 200. A subsequent Android-phone review found that the global platform/extension status read like internal diagnostics and delayed the useful action. The local revision removes those messages, silently orders choices, recommends the current-device option, and confines positive-only extension detection to the ChromeOS Linux card. Four focused source tests pass; the revision has not yet been pushed or deployed. |
 | Reproducible paid/Lite packages | complete | Deterministic builder and validator emit 122-file ZIPs plus public-key-only unpacked test fixtures. Paid `2.4.5`: `e76b7440928c1b6429775a2004c66d1f485cc07457efd976b4f6f129c1a18ac7`; Lite `2.4.13`: `0821158b3f90776ce061e187994cf8c82b476cb3af05dddadff299c82953cd91`. |
 | Local repository validation | complete; unrelated docs-check blocker recorded | `pnpm test`, focused migration/page tests, package build/validation, website build, formatting, lint, and `git diff --check` pass. Lint reports zero errors and 41 existing warnings. `pnpm docs:check` reaches only unrelated untracked Android investigation files with missing log links and machine-specific paths; those user-owned files were preserved. |
 | Physical ChromeOS validation | in progress; startup-event proof pending | The exact paid baseline `2.4.4` updated silently to `2.4.5` under the paid Store ID, preserved the old waitlist flags, and armed the new campaign with `lastPromptedAt: 0`. The paid notification and actions and the Lite `2.4.13` identity/copy were accepted in the real ChromeOS notification center. A genuine profile startup and second-startup throttle check still require the secure post-restart login path. |

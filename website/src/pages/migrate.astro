@@ -5,8 +5,8 @@ import Header from '../components/Header.astro'
 ---
 
 <BaseLayout
-  title="Move from the old JSTorrent Chrome App"
-  description="Choose the current JSTorrent setup for Chromebook, Windows, Mac, Linux, or Android."
+  title="Keep using JSTorrent"
+  description="Move from the old Chrome App to the current JSTorrent for Android, Chromebook, Windows, Mac, or Linux."
 >
   <Header />
   <main>
@@ -14,15 +14,10 @@ import Header from '../components/Header.astro'
       <div class="migration-container">
         <img src="/cook/JSTorrent/js-128.png" alt="JSTorrent" class="migration-logo" />
         <div>
-          <p class="eyebrow">Legacy Chrome App migration</p>
-          <h1>The old Chrome App has ended. JSTorrent is available again.</h1>
+          <h1>Keep using JSTorrent</h1>
           <p class="lede">
-            Pick the setup for this device. The current extension is browser integration, not a
-            complete torrent client by itself: it connects to the desktop app, Android companion,
-            or ChromeOS Linux service described below.
-          </p>
-          <p id="migration-context" class="context" aria-live="polite">
-            All supported setup choices are shown below.
+            The old Chrome App no longer works, but current versions of JSTorrent are available.
+            Start with the option that matches your device.
           </p>
         </div>
       </div>
@@ -30,55 +25,61 @@ import Header from '../components/Header.astro'
 
     <section class="section section-alt">
       <div class="migration-content">
-        <div id="extension-status" class="extension-status" aria-live="polite">
-          Checking whether the optional JSTorrent extension is installed&hellip;
-        </div>
-
         <div id="migration-choices" class="migration-choices">
           <article class="migration-card" data-choice="desktop">
-            <p class="choice-label">Windows, Mac, and Linux</p>
-            <h2>Install the standalone desktop app</h2>
+            <div class="choice-heading">
+              <p class="choice-label">Windows, Mac, and Linux</p>
+              <span class="recommendation" data-recommendation hidden>
+                Recommended for this device
+              </span>
+            </div>
+            <h2>Get the JSTorrent desktop app</h2>
             <p>
-              This is the complete desktop client and does not require Chrome. You may also install
-              the extension later for magnet links, right-click actions, and browser integration.
+              The complete JSTorrent app for your computer. It works on its own&mdash;no Chrome
+              extension required.
+            </p>
+            <p>
+              You can add browser integration later if you want magnet links and right-click
+              actions to open in JSTorrent.
             </p>
             <a class="btn btn-primary" href="/#download" data-migration-link>
-              See desktop downloads
+              Download JSTorrent
             </a>
           </article>
 
           <article class="migration-card" data-choice="play">
-            <p class="choice-label">Chromebook with Google Play, or Android</p>
-            <h2>Install the Android app</h2>
-            <p>
-              The Android app works as a standalone client. On a Chromebook it can also act as the
-              companion for the Chrome extension if you want browser integration.
-            </p>
-            <div class="button-row">
-              <a
-                class="btn btn-primary"
-                href="https://play.google.com/store/apps/details?id=com.jstorrent.app"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-migration-link
-              >
-                Get JSTorrent on Google Play
-              </a>
-              <a
-                class="btn btn-secondary"
-                href="https://chromewebstore.google.com/detail/jstorrent/dbokmlpefliilbjldladbimlcfgbolhk"
-                target="_blank"
-                rel="noopener noreferrer"
-                data-migration-link
-              >
-                Add browser integration
-              </a>
+            <div class="choice-heading">
+              <p class="choice-label">Android and Chromebooks with Google Play</p>
+              <span class="recommendation" data-recommendation hidden>
+                Recommended for this device
+              </span>
             </div>
+            <h2>Get JSTorrent from Google Play</h2>
+            <p>
+              The complete JSTorrent app for Android phones, tablets, and supported Chromebooks. It
+              works on its own&mdash;no Chrome extension required.
+            </p>
+            <a
+              class="btn btn-primary"
+              href="https://play.google.com/store/apps/details?id=com.jstorrent.app"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-migration-link
+            >
+              Get JSTorrent on Google Play
+            </a>
           </article>
 
           <article class="migration-card" data-choice="crostini">
-            <p class="choice-label">Chromebook without Google Play, including ChromeOS Flex</p>
-            <h2>Use the extension with Linux</h2>
+            <p class="choice-label">Chromebooks without Google Play, including ChromeOS Flex</p>
+            <h2>Use JSTorrent with ChromeOS Linux</h2>
+            <p>
+              If your Chromebook cannot use Google Play, install the JSTorrent Linux service and
+              connect the Chrome extension to it.
+            </p>
+            <p id="extension-status" class="extension-status" aria-live="polite" hidden>
+              JSTorrent extension already installed
+            </p>
             <ol>
               <li>Enable the Linux development environment in ChromeOS Settings.</li>
               <li>
@@ -96,21 +97,24 @@ import Header from '../components/Header.astro'
               rel="noopener noreferrer"
               data-migration-link
             >
-              Install the Chrome extension
+              Get the Chrome extension
             </a>
           </article>
+
+          <h2 id="other-options-heading" class="other-options-heading" hidden>
+            Other setup options
+          </h2>
         </div>
 
         <aside class="before-removing">
           <h2>Before removing the old app</h2>
           <p>
-            Confirm that your chosen current setup launches and can use the download location you
-            want. The old app's torrents, settings, and incomplete downloads are not transferred
-            automatically.
+            Set up and open the current JSTorrent first. Your old torrents, settings, and incomplete
+            downloads are not transferred automatically.
           </p>
           <p>
-            You can remove the old Chrome App independently after you are comfortable with the new
-            setup. Chrome will ask for confirmation; JSTorrent will not silently remove it.
+            When you are comfortable with the new setup, you can remove the old Chrome App. Chrome
+            will ask before removing it.
           </p>
         </aside>
       </div>
@@ -122,6 +126,7 @@ import Header from '../components/Header.astro'
 <style>
   .migration-intro {
     background: linear-gradient(to bottom, var(--color-bg-alt), var(--color-bg));
+    padding: 2rem 0;
   }
 
   .migration-container,
@@ -134,17 +139,16 @@ import Header from '../components/Header.astro'
 
   .migration-container {
     display: grid;
-    gap: 1.5rem;
+    gap: 1rem;
     align-items: center;
   }
 
   .migration-logo {
-    width: 96px;
-    height: 96px;
+    width: 72px;
+    height: 72px;
     margin: 0 auto;
   }
 
-  .eyebrow,
   .choice-label {
     color: var(--color-primary-dark);
     font-size: 0.8rem;
@@ -166,30 +170,6 @@ import Header from '../components/Header.astro'
     font-size: 1.05rem;
   }
 
-  .context,
-  .extension-status {
-    border: 1px solid var(--color-border);
-    border-radius: 8px;
-    background: var(--color-bg);
-    padding: 0.8rem 1rem;
-  }
-
-  .context {
-    display: inline-block;
-    margin-top: 0.5rem;
-    font-size: 0.9rem;
-  }
-
-  .extension-status {
-    margin-bottom: 1rem;
-    color: var(--color-text-light);
-  }
-
-  .extension-status.detected {
-    border-color: var(--color-success);
-    color: var(--color-success);
-  }
-
   .migration-choices {
     display: flex;
     flex-direction: column;
@@ -202,6 +182,53 @@ import Header from '../components/Header.astro'
     border-radius: 10px;
     background: var(--color-bg);
     padding: 1.5rem;
+  }
+
+  .migration-card.recommended {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 1px var(--color-primary);
+  }
+
+  .choice-heading {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .choice-heading .choice-label {
+    margin: 0;
+  }
+
+  .recommendation,
+  .extension-status {
+    border-radius: 999px;
+    padding: 0.25rem 0.65rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  .recommendation {
+    background: var(--color-primary);
+    color: var(--color-bg);
+  }
+
+  .extension-status {
+    display: inline-flex;
+    border: 1px solid var(--color-success);
+    color: var(--color-success);
+  }
+
+  .recommendation[hidden],
+  .extension-status[hidden],
+  .other-options-heading[hidden] {
+    display: none;
+  }
+
+  .other-options-heading {
+    margin: 0.75rem 0 0;
+    font-size: 1.15rem;
   }
 
   .migration-card h2,
@@ -221,12 +248,6 @@ import Header from '../components/Header.astro'
 
   .migration-card li {
     margin-bottom: 0.75rem;
-  }
-
-  .button-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
   }
 
   .migration-command {
@@ -261,8 +282,8 @@ import Header from '../components/Header.astro'
     }
 
     .migration-logo {
-      width: 112px;
-      height: 112px;
+      width: 96px;
+      height: 96px;
     }
   }
 </style>
@@ -317,32 +338,44 @@ import Header from '../components/Header.astro'
 
   const attribution = getAttribution()
   const platform = detectPlatform(attribution)
-  const variant = attribution.get('variant')
-  const context = document.getElementById('migration-context')
-  const platformNames: Record<MigrationPlatform, string> = {
-    chromeos: 'this Chromebook',
-    android: 'this Android device',
-    windows: 'this Windows computer',
-    macos: 'this Mac',
-    linux: 'this Linux computer',
-    other: 'this device',
+  const recommendationByPlatform: Partial<Record<MigrationPlatform, string>> = {
+    android: 'play',
+    windows: 'desktop',
+    macos: 'desktop',
+    linux: 'desktop',
   }
-
-  if (context) {
-    const product = variant === 'lite' ? 'JSTorrent Lite' : 'JSTorrent'
-    context.textContent = `Opened from the old ${product}. Choices for ${platformNames[platform]} are shown first; all supported choices remain available.`
+  const choiceOrder: Record<MigrationPlatform, string[]> = {
+    chromeos: ['play', 'crostini', 'desktop'],
+    android: ['play', 'desktop', 'crostini'],
+    windows: ['desktop', 'play', 'crostini'],
+    macos: ['desktop', 'play', 'crostini'],
+    linux: ['desktop', 'play', 'crostini'],
+    other: ['desktop', 'play', 'crostini'],
   }
+  const recommendedChoice = recommendationByPlatform[platform]
 
-  document.querySelectorAll('[data-choice]').forEach((element) => {
-    if (!(element instanceof HTMLElement)) return
-    const choice = element.dataset.choice
-    const chromeOsFirst = platform === 'chromeos' || platform === 'android'
-    if (chromeOsFirst) {
-      element.style.order = choice === 'play' ? '1' : choice === 'crostini' ? '2' : '3'
-    } else {
-      element.style.order = choice === 'desktop' ? '1' : choice === 'play' ? '2' : '3'
+  const choices = document.getElementById('migration-choices')
+  if (choices) {
+    const cards = Array.from(choices.querySelectorAll('[data-choice]')).filter(
+      (element): element is HTMLElement => element instanceof HTMLElement,
+    )
+    for (const choice of choiceOrder[platform]) {
+      const card = cards.find((element) => element.dataset.choice === choice)
+      if (card) choices.append(card)
     }
-  })
+
+    const recommendedCard = cards.find(
+      (element) => element.dataset.choice === recommendedChoice,
+    )
+    const otherOptionsHeading = document.getElementById('other-options-heading')
+    if (recommendedCard && otherOptionsHeading) {
+      recommendedCard.classList.add('recommended')
+      const recommendation = recommendedCard.querySelector('[data-recommendation]')
+      if (recommendation instanceof HTMLElement) recommendation.hidden = false
+      recommendedCard.insertAdjacentElement('afterend', otherOptionsHeading)
+      otherOptionsHeading.hidden = false
+    }
+  }
 
   document.querySelectorAll('[data-migration-link]').forEach((element) => {
     if (!(element instanceof HTMLAnchorElement)) return
@@ -355,22 +388,12 @@ import Header from '../components/Header.astro'
   const chromeApi = (globalThis as typeof globalThis & { chrome?: MigrationChromeApi }).chrome
   try {
     const chromeRuntime = chromeApi?.runtime
-    if (!chromeRuntime) throw new Error('Chrome extension messaging unavailable')
-    chromeRuntime.sendMessage(extensionId, { type: 'ping' }, (response) => {
-      if (!extensionStatus) return
-      if (!chromeRuntime.lastError && response?.installed) {
-        extensionStatus.classList.add('detected')
-        extensionStatus.textContent =
-          'JSTorrent extension detected. It still needs the desktop app, Android companion, or ChromeOS Linux service for the setup you choose.'
-      } else {
-        extensionStatus.textContent =
-          'JSTorrent extension not detected. Install it only if you want browser integration or choose the ChromeOS Linux setup.'
-      }
-    })
-  } catch {
-    if (extensionStatus) {
-      extensionStatus.textContent =
-        'JSTorrent extension not detected. Install it only if you want browser integration or choose the ChromeOS Linux setup.'
+    if (chromeRuntime) {
+      chromeRuntime.sendMessage(extensionId, { type: 'ping' }, (response) => {
+        if (!chromeRuntime.lastError && response?.installed && extensionStatus) {
+          extensionStatus.hidden = false
+        }
+      })
     }
-  }
+  } catch {}
 </script>
