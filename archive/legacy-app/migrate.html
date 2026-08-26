@@ -1,8 +1,8 @@
-<!-- IMPORTANT: This file has a twin in ~/code/web-server/legacy/migrate.html
-     Any changes here should almost certainly be mirrored there (and vice versa). Ask before proceeding. -->
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="utf-8">
+  <title>Move to the new JSTorrent</title>
   <style>
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -12,7 +12,7 @@
       color: #333;
     }
     .container {
-      max-width: 360px;
+      max-width: 380px;
       margin: 0 auto;
     }
     .icon {
@@ -24,7 +24,7 @@
       height: 64px;
     }
     h1 {
-      font-size: 18px;
+      font-size: 20px;
       text-align: center;
       margin: 0 0 12px;
     }
@@ -39,6 +39,7 @@
       border-radius: 8px;
       margin-bottom: 16px;
       font-size: 14px;
+      line-height: 1.4;
     }
     .status.checking {
       background: #fff3cd;
@@ -49,8 +50,8 @@
       color: #155724;
     }
     .status.not-installed {
-      background: #f8d7da;
-      color: #721c24;
+      background: #e8eaed;
+      color: #3c4043;
     }
     .btn {
       display: block;
@@ -70,25 +71,17 @@
       background: #1a73e8;
       color: white;
     }
-    .btn-primary:hover {
-      background: #1557b0;
-    }
     .btn-danger {
       background: #dc3545;
       color: white;
-    }
-    .btn-danger:hover {
-      background: #c82333;
     }
     .btn-secondary {
       background: #e8eaed;
       color: #333;
     }
-    .btn-secondary:hover {
-      background: #dadce0;
-    }
-    .hidden {
-      display: none;
+    .fine-print {
+      font-size: 12px;
+      color: #777;
     }
   </style>
 </head>
@@ -97,30 +90,28 @@
     <div class="icon">
       <img src="js-128.png" alt="JSTorrent">
     </div>
-    <h1>JSTorrent has moved!</h1>
-    <p>
-      Chrome Apps are being discontinued. JSTorrent is now
-      available as a Chrome Extension with the same features and more.
+    <h1 id="heading">JSTorrent has a new version</h1>
+    <p id="migration-copy">
+      This old Chrome App has ended. Choose the current JSTorrent setup for
+      this device.
     </p>
 
-    <div id="status" class="status checking">Checking for new extension...</div>
+    <div id="status" class="status checking">Checking for the JSTorrent extension...</div>
 
-    <div id="actions-not-installed">
-      <a class="btn btn-primary" id="install-btn" href="https://chromewebstore.google.com/detail/jstorrent/dbokmlpefliilbjldladbimlcfgbolhk" target="_blank">
-        Get the new extension
-      </a>
-      <button class="btn btn-secondary" id="dismiss-btn">Remind me later</button>
-    </div>
+    <a class="btn btn-primary" id="migrate-btn" href="https://jstorrent.com/migrate" target="_blank">
+      See migration options
+    </a>
+    <button class="btn btn-secondary" id="remind-btn">Remind me in 7 days</button>
+    <button class="btn btn-secondary" id="stop-btn">Stop reminders</button>
+    <button class="btn btn-danger" id="uninstall-btn">Remove old app</button>
 
-    <div id="actions-installed" class="hidden">
-      <p style="color: #155724; font-weight: 600;">
-        You're all set! You can remove this old app.
-      </p>
-      <button class="btn btn-danger" id="uninstall-btn">Remove old app</button>
-      <button class="btn btn-secondary" id="keep-btn">Keep for now</button>
-    </div>
+    <p class="fine-print">
+      Removing this app uses Chrome's confirmation dialog. JSTorrent does not
+      silently remove the app or transfer its download state.
+    </p>
   </div>
 
+  <script src="migration.js"></script>
   <script src="migrate.js"></script>
 </body>
 </html>

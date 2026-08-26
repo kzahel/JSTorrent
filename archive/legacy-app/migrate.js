@@ -1,37 +1,65 @@
-// IMPORTANT: This file has a twin in ~/code/web-server/legacy/migrate.js
-// Any changes here should almost certainly be mirrored there (and vice versa). Ask before proceeding.
-
-var NEW_EXTENSION_ID = 'dbokmlpefliilbjldladbimlcfgbolhk'
 var statusEl = document.getElementById('status')
-var actionsNotInstalled = document.getElementById('actions-not-installed')
-var actionsInstalled = document.getElementById('actions-installed')
+var headingEl = document.getElementById('heading')
+var migrationCopyEl = document.getElementById('migration-copy')
+var migrateBtn = document.getElementById('migrate-btn')
+var variant = getLegacyMigrationVariant(chrome.runtime.id)
+var productName = getLegacyMigrationProductName(variant)
+var platform = 'other'
 
-// Check if new extension is installed
-chrome.runtime.sendMessage(NEW_EXTENSION_ID, {type: 'ping'}, function(response) {
-  if (chrome.runtime.lastError) {
-    statusEl.textContent = 'New extension not yet installed'
-    statusEl.className = 'status not-installed'
-  } else {
-    statusEl.textContent = 'New extension is installed!'
-    statusEl.className = 'status installed'
-    actionsNotInstalled.classList.add('hidden')
-    actionsInstalled.classList.remove('hidden')
+headingEl.textContent = productName + ' has a new version'
+
+function withBackgroundPage(callback) {
+  chrome.runtime.getBackgroundPage(function(backgroundPage) {
+    if (backgroundPage) callback(backgroundPage)
+  })
+}
+
+chrome.runtime.getPlatformInfo(function(info) {
+  platform = getLegacyMigrationPlatform(info && info.os)
+  migrateBtn.href = getLegacyMigrationUrl('legacy-app-window', variant, platform)
+
+  if (platform === 'chromeos') {
+    migrationCopyEl.textContent = 'This old Chrome App no longer launches on current ChromeOS. JSTorrent is available again. Choose the Android, extension plus companion, or Crostini setup that fits this Chromebook.'
+  } else if (platform === 'windows' || platform === 'macos' || platform === 'linux') {
+    migrationCopyEl.textContent = 'Chrome no longer runs this old app. Install the current standalone JSTorrent desktop app; the Chrome extension is optional browser integration.'
   }
 })
 
-document.getElementById('uninstall-btn').addEventListener('click', function() {
-  chrome.management.uninstallSelf({ showConfirmDialog: true })
+chrome.runtime.sendMessage(LEGACY_MIGRATION_NEW_EXTENSION_ID, {type:'ping'}, function(response) {
+  if (!chrome.runtime.lastError && response && response.installed) {
+    statusEl.textContent = 'JSTorrent extension detected. Finish the required desktop, Android, or Crostini setup before relying on it.'
+    statusEl.className = 'status installed'
+  } else {
+    statusEl.textContent = 'JSTorrent extension not detected. It is optional on desktop; use the setup guide to choose what this device needs.'
+    statusEl.className = 'status not-installed'
+  }
 })
 
-document.getElementById('dismiss-btn').addEventListener('click', function() {
-  chrome.runtime.getBackgroundPage(function(bg) {
-    var snoozeMs = (bg.MIGRATE_SNOOZE_HOURS || 24) * 60 * 60 * 1000
-    chrome.storage.local.set({ migrationSnoozedUntil: Date.now() + snoozeMs }, function() {
+migrateBtn.addEventListener('click', function() {
+  withBackgroundPage(function(backgroundPage) {
+    backgroundPage.acknowledgeLegacyMigrationCampaign()
+  })
+})
+
+document.getElementById('remind-btn').addEventListener('click', function() {
+  withBackgroundPage(function(backgroundPage) {
+    backgroundPage.snoozeLegacyMigrationCampaign(function() {
       window.close()
     })
   })
 })
 
-document.getElementById('keep-btn').addEventListener('click', function() {
-  window.close()
+document.getElementById('stop-btn').addEventListener('click', function() {
+  withBackgroundPage(function(backgroundPage) {
+    backgroundPage.stopLegacyMigrationReminders()
+  })
+})
+
+document.getElementById('uninstall-btn').addEventListener('click', function() {
+  chrome.management.uninstallSelf({showConfirmDialog:true}, function() {
+    if (chrome.runtime.lastError) {
+      statusEl.textContent = 'Chrome could not remove this app: ' + chrome.runtime.lastError.message
+      statusEl.className = 'status not-installed'
+    }
+  })
 })

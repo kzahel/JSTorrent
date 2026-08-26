@@ -60,7 +60,7 @@
     },
     "app": {
         "background": {
-            "scripts": ["conf.js", "background.js"]
+            "scripts": ["conf.js", "migration.js", "migration-runtime.js", "background.js"]
         }
     },
     "url_handlers": {

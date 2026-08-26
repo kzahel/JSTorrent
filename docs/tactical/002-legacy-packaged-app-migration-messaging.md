@@ -1,6 +1,6 @@
 # 002: Legacy Packaged App Migration Messaging
 
-Status: planned.
+Status: in progress.
 
 Replace the paid and Lite Chrome packaged apps' obsolete waitlist notice with
 an accurate, respectful path to the current JSTorrent product. Preserve
@@ -241,18 +241,18 @@ URLs must link directly to the stable migration route.
 
 ### 2. Implement and unit-test campaign state
 
-- [ ] Extract small ES-compatible pure helpers for platform classification,
+- [x] Extract small ES-compatible pure helpers for platform classification,
   migration URL construction, notification copy, and reminder eligibility.
-- [ ] Replace the old pending/dismissed booleans with a campaign-scoped state
+- [x] Replace the old pending/dismissed booleans with a campaign-scoped state
   transition layer.
-- [ ] Arm the campaign on the relevant `onInstalled` update without displaying
+- [x] Arm the campaign on the relevant `onInstalled` update without displaying
   a migration notification from that event.
-- [ ] Make `onStartup` the only automatic prompt trigger and enforce the
+- [x] Make `onStartup` the only automatic prompt trigger and enforce the
   seven-day minimum interval.
-- [ ] Ensure a notification close, reminder action, acknowledgment, permanent
+- [x] Ensure a notification close, reminder action, acknowledgment, permanent
   stop, duplicate event, and later update in the same campaign all have
   deterministic behavior.
-- [ ] Remove the experimental script-load prompt, startup window, ten-minute
+- [x] Remove the experimental script-load prompt, startup window, ten-minute
   alarm, reason suffixes, and extension-only success copy.
 
 Automated tests must cover:
@@ -269,17 +269,17 @@ Automated tests must cover:
 
 ### 3. Implement notification and explicit-launch UI
 
-- [ ] Create the native notification with platform-aware copy, the stable
+- [x] Create the native notification with platform-aware copy, the stable
   migration URL, primary migration action, and seven-day reminder action.
-- [ ] Use `chrome.browser.openTab` where supported and a tested `window.open`
+- [x] Use `chrome.browser.openTab` where supported and a tested `window.open`
   fallback elsewhere.
-- [ ] Rework `migrate.html` and its script to show accurate platform guidance,
+- [x] Rework `migrate.html` and its script to show accurate platform guidance,
   optional extension detection, `See migration options`, `Remind me in 7
   days`, `Stop reminders`, and confirmed `Remove old app` actions.
-- [ ] Deduplicate/focus the migration window and preserve the existing main-app
+- [x] Deduplicate/focus the migration window and preserve the existing main-app
   launch path on runtimes that still deliver `onLaunched`.
-- [ ] Set a stable direct uninstall URL with variant/campaign attribution.
-- [ ] Verify that the implementation adds no new broad permission and does not
+- [x] Set a stable direct uninstall URL with variant/campaign attribution.
+- [x] Verify that the implementation adds no new broad permission and does not
   modify the torrent engine or user data.
 
 ### 4. Add the stable website migration route
@@ -473,8 +473,8 @@ on source changes.
 | Checkpoint | Status | Evidence |
 | --- | --- | --- |
 | Exact paid/Lite baseline reconciliation | complete | Google update artifacts fetched and hashed on 2026-08-26; paid/Lite executable trees are byte-identical. |
-| Campaign state and automated tests | pending | |
-| Notification and local migration UI | pending | |
+| Campaign state and automated tests | complete | Ten focused Node tests cover activation, startup throttle, retry, reminder, acknowledgment, permanent stop, same-campaign preservation, explicit launch, variants, and platform routing. |
+| Notification and local migration UI | complete | Shared migration runtime replaces the unshipped maximum-nag experiment; startup is the sole automatic UI trigger and explicit launch opens a bounded local window. |
 | Stable website migration route | pending | |
 | Reproducible paid/Lite packages | pending | |
 | Physical ChromeOS validation | pending | |

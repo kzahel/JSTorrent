@@ -224,8 +224,8 @@ function getBlobURL(entry, callback) {
 
 function setup_uninstall() {
     try {
-        chrome.runtime.setUninstallURL('https://new.jstorrent.com/comingsoon.html?ref=uninstall',
-        // chrome.runtime.setUninstallURL('http://jstorrent.com/uninstall/?id=' + encodeURIComponent(chrome.runtime.id),
+        var variant = getLegacyMigrationVariant(chrome.runtime.id)
+        chrome.runtime.setUninstallURL(getLegacyMigrationUrl('legacy-app-uninstall', variant),
                                        function(result) {
                                            var lasterr = chrome.runtime.lastError
                                            if (lasterr) {
@@ -286,7 +286,7 @@ chrome.runtime.onInstalled.addListener(function(details) {
         }
 
         if (showUpdateNotification) {
-            doShowUpdateNotification(details, resp)
+            console.log('suppressing generic update notification for migration release')
         }
     })
     })
@@ -597,113 +597,3 @@ chrome.app.runtime.onRestarted.addListener( function(evt) {
 if (chrome.runtime.setUninstallURL && ! DEVMODE) {
     setup_uninstall()
 }
-
-
-
-// =============================================================================
-// Migration Nag System
-// Chrome Apps are dead. Nag users to install the new Chrome Extension.
-// All flags on = maximum aggressiveness. Dial back during testing.
-// =============================================================================
-
-var NEW_EXTENSION_ID = 'dbokmlpefliilbjldladbimlcfgbolhk'
-var NEW_EXTENSION_CWS_URL = 'https://chromewebstore.google.com/detail/jstorrent/dbokmlpefliilbjldladbimlcfgbolhk'
-
-// Migration nag configuration
-// Each trigger calls showMigrationNags() which shows both notification + migrate window
-var MIGRATE_ON_SCRIPT_LOAD = true   // nag every time the event page loads (any event)
-var MIGRATE_ON_STARTUP = true       // nag on chrome.runtime.onStartup (browser boot)
-var MIGRATE_ON_INSTALLED = true     // nag on chrome.runtime.onInstalled (CWS update push)
-var MIGRATE_ON_LAUNCHED = true      // nag on chrome.app.runtime.onLaunched — dead on Chrome 144+ but kept for old Chrome
-var MIGRATE_USE_ALARM = true        // set repeating alarm to nag periodically
-var MIGRATE_ALARM_MINUTES = 10      // alarm interval in minutes
-var MIGRATE_SNOOZE_HOURS = 24       // how long "remind me later" suppresses nags
-var MIGRATE_SET_UNINSTALL_URL = true
-var MIGRATE_UNINSTALL_URL = 'https://jstorrent.com/comingsoon.html?ref=uninstall'
-
-// Cache platform for sync access in notification messages
-var PLATFORM_OS = null
-chrome.runtime.getPlatformInfo(function(info) { PLATFORM_OS = info.os })
-
-// -- Functions ----------------------------------------------------------------
-
-function showMigrationNags(reason) {
-    chrome.storage.local.get('migrationSnoozedUntil', function(data) {
-        if (data.migrationSnoozedUntil && Date.now() < data.migrationSnoozedUntil) {
-            console.log('migration nags snoozed, skipping [' + reason + ']')
-            return
-        }
-        console.log('showMigrationNags', reason)
-        showMigrationNotification(reason)
-        showMigrateWindow()
-    })
-}
-
-function showMigrationNotification(reason) {
-    var msg
-    if (PLATFORM_OS === 'cros') {
-        msg = 'The JSTorrent app icon no longer works. Install the new Chrome Extension to keep using JSTorrent.'
-    } else {
-        msg = 'Chrome Apps are no longer supported. Install the new JSTorrent Chrome Extension.'
-    }
-    if (reason) msg += ' [' + reason + ']'
-
-    chrome.notifications.create('migration', {
-        type: 'basic',
-        title: 'JSTorrent has moved!',
-        message: msg,
-        iconUrl: 'js-128.png',
-        priority: 2,
-        requireInteraction: true
-    })
-}
-
-var migrateWindowCreating = false
-function showMigrateWindow() {
-    if (PLATFORM_OS !== null && PLATFORM_OS !== 'cros') return
-    if (migrateWindowCreating) return
-    var existing = chrome.app.window.get('migrate')
-    if (existing) { existing.show(); existing.focus(); return }
-    migrateWindowCreating = true
-    chrome.app.window.create('migrate.html', {
-        id: 'migrate',
-        outerBounds: { width: 420, height: 440 }
-    }, function() { migrateWindowCreating = false })
-}
-
-// -- Notification click handler -----------------------------------------------
-
-chrome.notifications.onClicked.addListener(function(id) {
-    if (id !== 'migration') return
-    showMigrateWindow()
-    chrome.notifications.clear(id)
-})
-
-// -- Triggers -----------------------------------------------------------------
-
-chrome.runtime.onStartup.addListener(function() {
-    if (MIGRATE_ON_STARTUP) showMigrationNags('onStartup')
-})
-
-chrome.runtime.onInstalled.addListener(function() {
-    if (MIGRATE_SET_UNINSTALL_URL) {
-        chrome.runtime.setUninstallURL(MIGRATE_UNINSTALL_URL)
-    }
-    if (MIGRATE_USE_ALARM) {
-        chrome.alarms.create('migration', { periodInMinutes: MIGRATE_ALARM_MINUTES })
-    }
-    if (MIGRATE_ON_INSTALLED) showMigrationNags('onInstalled')
-})
-
-chrome.app.runtime.onLaunched.addListener(function() {
-    if (MIGRATE_ON_LAUNCHED) showMigrationNags('onLaunched')
-})
-
-chrome.alarms.onAlarm.addListener(function(alarm) {
-    if (alarm.name === 'migration') {
-        showMigrationNags('alarm')
-    }
-})
-
-// Fire on every event page load (catch-all for any event that wakes the background page)
-if (MIGRATE_ON_SCRIPT_LOAD) showMigrationNags('scriptLoad')
