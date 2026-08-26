@@ -16,3 +16,7 @@ work changes a continuing concern.
 
 - [`001-repository-housekeeping.md`](001-repository-housekeeping.md): security,
   toolchain, CI, stale-file, and release-integrity housekeeping.
+- [`002-legacy-packaged-app-migration-messaging.md`](002-legacy-packaged-app-migration-messaging.md):
+  replace the paid and Lite Chrome Apps' obsolete waitlist notice with a
+  startup-timed, bounded migration campaign and validate it on ChromeOS and
+  Windows.
