@@ -63,6 +63,40 @@ artifacts and replacing the experimental policy. The older
 [`legacy-migration.md`](../archive/project/legacy-migration.md) records that
 experiment and historical traffic evidence; it is not current product truth.
 
+### Exact Store baseline reconciliation
+
+The 2026-08-26 reconciliation downloaded both CRX3 artifacts directly from
+Google's update service and recorded:
+
+| Variant | Version | CRX SHA-256 | Extracted files |
+| --- | --- | --- | ---: |
+| Paid | `2.4.4` | `f94861ae34ae00f6a078cd17ad05ef9274cc96c1321d750cf9027c1c8a96636a` | 123 |
+| Lite | `2.4.12` | `25dcba280f2d6f7e446fc8bea5071cc568d793c7c401600b0c0f3fcece99dd03` | 123 |
+
+The two extracted products differ only in the manifest version, English
+localized name (`JSTorrent` versus `JSTorrent Lite`), and Store-generated
+`_metadata/verified_contents.json`. Every executable and content file is
+otherwise byte-identical.
+
+The paid Store artifact and `archive/legacy-app/` differ only in the final
+migration section of `background.js`, the Store-generated `_metadata/`
+directory, an accidentally shipped localization backup, the repository-only
+packaging script, and the unshipped `migrate.html`/`migrate.js`. All source
+before the migration section is byte-identical. Therefore:
+
+- `archive/legacy-app/` remains the canonical editable source tree;
+- the replacement migration implementation must be reviewed as a complete
+  replacement for the experimental final section;
+- paid and Lite are explicit packaging overlays on one source tree; and
+- Store-generated metadata and accidental backup files are not inputs to the
+  new packages.
+
+The existing Store-signed CRX3 headers contain distinct public keys that
+derive the expected paid and Lite IDs. Those public keys may be applied as
+test-only manifest overlays so unpacked transition fixtures retain stable
+identity. They are not shipping inputs, and no private Store key is required
+or permitted.
+
 ## Accepted Product Decisions
 
 ### Startup is the primary delivery boundary
@@ -192,17 +226,17 @@ URLs must link directly to the stable migration route.
 
 ### 1. Preserve and reconcile exact Store baselines
 
-- [ ] Fetch the current paid and Lite CRX artifacts through Google's update
+- [x] Fetch the current paid and Lite CRX artifacts through Google's update
   service, record their reported versions and SHA-256 hashes, and extract them
   only into ignored or temporary directories.
-- [ ] Diff both exact artifacts against each other and against
+- [x] Diff both exact artifacts against each other and against
   `archive/legacy-app/`. Classify variant-specific name, version, configuration,
   and identity differences separately from accidental repository drift.
-- [ ] Treat the live package behavior as the starting point. Retain only
+- [x] Treat the live package behavior as the starting point. Retain only
   reviewed parts of the unshipped migration experiment.
-- [ ] Establish a public-key-only unpacked-test identity strategy for both app
+- [x] Establish a public-key-only unpacked-test identity strategy for both app
   IDs. Never retrieve, generate, copy, or commit a private Store signing key.
-- [ ] Record the resulting source-of-truth and variant model here before code
+- [x] Record the resulting source-of-truth and variant model here before code
   changes proceed.
 
 ### 2. Implement and unit-test campaign state
@@ -438,7 +472,7 @@ on source changes.
 
 | Checkpoint | Status | Evidence |
 | --- | --- | --- |
-| Exact paid/Lite baseline reconciliation | pending | |
+| Exact paid/Lite baseline reconciliation | complete | Google update artifacts fetched and hashed on 2026-08-26; paid/Lite executable trees are byte-identical. |
 | Campaign state and automated tests | pending | |
 | Notification and local migration UI | pending | |
 | Stable website migration route | pending | |
