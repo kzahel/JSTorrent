@@ -414,7 +414,7 @@ requires the applicable disruptive claim.
 - [x] Verify the prompt interval and acknowledgment state across complete
   Chrome process restarts. Record any toast-action delivery limitation
   separately from the campaign state behavior.
-- [ ] Verify the website's Windows destination and that the extension is
+- [x] Verify the website's Windows destination and that the extension is
   described as optional integration rather than the torrent engine.
 - [x] Capture the visible result and semantic state where available, restore
   the disposable profile, and perform claim-aware VM cleanup.
@@ -425,14 +425,14 @@ Record that distinction explicitly.
 
 ### 9. Prepare a release handoff without publishing
 
-- [ ] Record both candidate ZIP hashes, exact baseline-to-candidate diffs,
+- [x] Record both candidate ZIP hashes, exact baseline-to-candidate diffs,
   automated results, ChromeOS evidence, Windows evidence, and known platform
   limitations.
-- [ ] Confirm the stable migration page is deployed before any Store package
+- [x] Confirm the stable migration page is deployed before any Store package
   references it.
-- [ ] Prepare controlled-profile Store delivery checks for both existing item
+- [x] Prepare controlled-profile Store delivery checks for both existing item
   IDs.
-- [ ] Stop before upload, submission, publication, listing edits, or rollout
+- [x] Stop before upload, submission, publication, listing edits, or rollout
   unless the user explicitly authorizes those state-changing actions.
 - [ ] After an authorized rollout, verify exact Store-delivered versions on a
   controlled existing installation before treating repository/device testing
@@ -477,7 +477,7 @@ on source changes.
 | Exact paid/Lite baseline reconciliation | complete | Google update artifacts fetched and hashed on 2026-08-26; paid/Lite executable trees are byte-identical. |
 | Campaign state and automated tests | complete | Ten focused Node tests cover activation, startup throttle, retry, reminder, acknowledgment, permanent stop, same-campaign preservation, explicit launch, variants, and platform routing. |
 | Notification and local migration UI | complete | Shared migration runtime replaces the unshipped maximum-nag experiment; startup is the sole automatic UI trigger and explicit launch opens a bounded local window. |
-| Stable website migration route | implemented; deployment pending | Astro check/build and three focused tests pass. Desktop and 390 px Playwright renders were inspected; the ChromeOS query put Play and Crostini first and preserved only bounded attribution on outgoing links. Existing `jstorrent.com/comingsoon.html` returns 200, and the intentional `new.jstorrent.com` 404 document still preserves the requested path in its browser redirect. The new live `/migrate` route remains 404 until this website commit is deployed. |
+| Stable website migration route | complete and deployed | Astro check/build and three focused tests pass. Desktop and 390 px Playwright renders were inspected; the ChromeOS query put Play and Crostini first and preserved only bounded attribution on outgoing links. GitHub Pages deployment `32960986953` completed successfully on 2026-08-26. The base route and attributed ChromeOS/Windows routes return 200, as do the desktop download target, Crostini installer, Google Play listing, and Chrome Web Store listing. |
 | Reproducible paid/Lite packages | complete | Deterministic builder and validator emit 122-file ZIPs plus public-key-only unpacked test fixtures. Paid `2.4.5`: `e76b7440928c1b6429775a2004c66d1f485cc07457efd976b4f6f129c1a18ac7`; Lite `2.4.13`: `0821158b3f90776ce061e187994cf8c82b476cb3af05dddadff299c82953cd91`. |
 | Local repository validation | complete; unrelated docs-check blocker recorded | `pnpm test`, focused migration/page tests, package build/validation, website build, formatting, lint, and `git diff --check` pass. Lint reports zero errors and 41 existing warnings. `pnpm docs:check` reaches only unrelated untracked Android investigation files with missing log links and machine-specific paths; those user-owned files were preserved. |
 | Physical ChromeOS validation | in progress; startup-event proof pending | The exact paid baseline `2.4.4` updated silently to `2.4.5` under the paid Store ID, preserved the old waitlist flags, and armed the new campaign with `lastPromptedAt: 0`. The paid notification and actions and the Lite `2.4.13` identity/copy were accepted in the real ChromeOS notification center. A genuine profile startup and second-startup throttle check still require the secure post-restart login path. |
@@ -657,10 +657,12 @@ The run established:
   integration. Its `Remove old app` action displayed Chrome's native
   `Remove "JSTorrent"?` confirmation with abuse-report, Remove, and Cancel
   controls. Confirming Remove removed only the disposable legacy app.
-- The live migration URL still returned the documented deployment-gate 404.
-  Therefore the exact route and platform attribution are accepted, but the
-  Windows page destination cannot be called live-accepted until the website is
-  deployed.
+- During the Windows VM run, the live migration URL still returned the
+  documented deployment-gate 404. The site was subsequently deployed through
+  the normal GitHub Pages workflow on 2026-08-26. The exact attributed Windows
+  route now returns 200, contains the desktop-first guidance with the extension
+  described as optional integration, and its desktop destination also returns
+  200.
 
 Representative captures remain outside the repository at:
 
