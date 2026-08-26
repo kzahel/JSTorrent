@@ -1,0 +1,376 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro'
+import Footer from '../components/Footer.astro'
+import Header from '../components/Header.astro'
+---
+
+<BaseLayout
+  title="Move from the old JSTorrent Chrome App"
+  description="Choose the current JSTorrent setup for Chromebook, Windows, Mac, Linux, or Android."
+>
+  <Header />
+  <main>
+    <section class="migration-intro section">
+      <div class="migration-container">
+        <img src="/cook/JSTorrent/js-128.png" alt="JSTorrent" class="migration-logo" />
+        <div>
+          <p class="eyebrow">Legacy Chrome App migration</p>
+          <h1>The old Chrome App has ended. JSTorrent is available again.</h1>
+          <p class="lede">
+            Pick the setup for this device. The current extension is browser integration, not a
+            complete torrent client by itself: it connects to the desktop app, Android companion,
+            or ChromeOS Linux service described below.
+          </p>
+          <p id="migration-context" class="context" aria-live="polite">
+            All supported setup choices are shown below.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-alt">
+      <div class="migration-content">
+        <div id="extension-status" class="extension-status" aria-live="polite">
+          Checking whether the optional JSTorrent extension is installed&hellip;
+        </div>
+
+        <div id="migration-choices" class="migration-choices">
+          <article class="migration-card" data-choice="desktop">
+            <p class="choice-label">Windows, Mac, and Linux</p>
+            <h2>Install the standalone desktop app</h2>
+            <p>
+              This is the complete desktop client and does not require Chrome. You may also install
+              the extension later for magnet links, right-click actions, and browser integration.
+            </p>
+            <a class="btn btn-primary" href="/#download" data-migration-link>
+              See desktop downloads
+            </a>
+          </article>
+
+          <article class="migration-card" data-choice="play">
+            <p class="choice-label">Chromebook with Google Play, or Android</p>
+            <h2>Install the Android app</h2>
+            <p>
+              The Android app works as a standalone client. On a Chromebook it can also act as the
+              companion for the Chrome extension if you want browser integration.
+            </p>
+            <div class="button-row">
+              <a
+                class="btn btn-primary"
+                href="https://play.google.com/store/apps/details?id=com.jstorrent.app"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-migration-link
+              >
+                Get JSTorrent on Google Play
+              </a>
+              <a
+                class="btn btn-secondary"
+                href="https://chromewebstore.google.com/detail/jstorrent/dbokmlpefliilbjldladbimlcfgbolhk"
+                target="_blank"
+                rel="noopener noreferrer"
+                data-migration-link
+              >
+                Add browser integration
+              </a>
+            </div>
+          </article>
+
+          <article class="migration-card" data-choice="crostini">
+            <p class="choice-label">Chromebook without Google Play, including ChromeOS Flex</p>
+            <h2>Use the extension with Linux</h2>
+            <ol>
+              <li>Enable the Linux development environment in ChromeOS Settings.</li>
+              <li>
+                In the Linux terminal, run:
+                <div class="migration-command">
+                  <code>curl -fsSL https://jstorrent.com/install-crostini.sh | bash</code>
+                </div>
+              </li>
+              <li>Install the JSTorrent Chrome extension and let it connect to the service.</li>
+            </ol>
+            <a
+              class="btn btn-primary"
+              href="https://chromewebstore.google.com/detail/jstorrent/dbokmlpefliilbjldladbimlcfgbolhk"
+              target="_blank"
+              rel="noopener noreferrer"
+              data-migration-link
+            >
+              Install the Chrome extension
+            </a>
+          </article>
+        </div>
+
+        <aside class="before-removing">
+          <h2>Before removing the old app</h2>
+          <p>
+            Confirm that your chosen current setup launches and can use the download location you
+            want. The old app's torrents, settings, and incomplete downloads are not transferred
+            automatically.
+          </p>
+          <p>
+            You can remove the old Chrome App independently after you are comfortable with the new
+            setup. Chrome will ask for confirmation; JSTorrent will not silently remove it.
+          </p>
+        </aside>
+      </div>
+    </section>
+  </main>
+  <Footer />
+</BaseLayout>
+
+<style>
+  .migration-intro {
+    background: linear-gradient(to bottom, var(--color-bg-alt), var(--color-bg));
+  }
+
+  .migration-container,
+  .migration-content {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 0 1rem;
+  }
+
+  .migration-container {
+    display: grid;
+    gap: 1.5rem;
+    align-items: center;
+  }
+
+  .migration-logo {
+    width: 96px;
+    height: 96px;
+    margin: 0 auto;
+  }
+
+  .eyebrow,
+  .choice-label {
+    color: var(--color-primary-dark);
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+  }
+
+  h1 {
+    max-width: 760px;
+    margin: 0.25rem 0 0.75rem;
+    font-size: clamp(1.8rem, 5vw, 2.75rem);
+    line-height: 1.15;
+  }
+
+  .lede {
+    max-width: 72ch;
+    color: var(--color-text-light);
+    font-size: 1.05rem;
+  }
+
+  .context,
+  .extension-status {
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-bg);
+    padding: 0.8rem 1rem;
+  }
+
+  .context {
+    display: inline-block;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .extension-status {
+    margin-bottom: 1rem;
+    color: var(--color-text-light);
+  }
+
+  .extension-status.detected {
+    border-color: var(--color-success);
+    color: var(--color-success);
+  }
+
+  .migration-choices {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .migration-card,
+  .before-removing {
+    border: 1px solid var(--color-border);
+    border-radius: 10px;
+    background: var(--color-bg);
+    padding: 1.5rem;
+  }
+
+  .migration-card h2,
+  .before-removing h2 {
+    margin: 0.2rem 0 0.75rem;
+    font-size: 1.35rem;
+  }
+
+  .migration-card p,
+  .before-removing p {
+    color: var(--color-text-light);
+  }
+
+  .migration-card ol {
+    margin: 0 0 1.25rem 1.25rem;
+  }
+
+  .migration-card li {
+    margin-bottom: 0.75rem;
+  }
+
+  .button-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .migration-command {
+    max-width: 100%;
+    margin-top: 0.5rem;
+    overflow-x: auto;
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    background: var(--color-code-bg);
+    padding: 0.7rem 0.8rem;
+  }
+
+  .migration-command code {
+    white-space: nowrap;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    font-size: 0.8rem;
+  }
+
+  .before-removing {
+    margin-top: 1rem;
+    border-left: 4px solid var(--color-warning-border);
+  }
+
+  @media (min-width: 640px) {
+    .migration-container,
+    .migration-content {
+      padding: 0 1.5rem;
+    }
+
+    .migration-container {
+      grid-template-columns: auto 1fr;
+    }
+
+    .migration-logo {
+      width: 112px;
+      height: 112px;
+    }
+  }
+</style>
+
+<script>
+  type MigrationPlatform = 'chromeos' | 'windows' | 'macos' | 'linux' | 'android' | 'other'
+  interface MigrationChromeApi {
+    runtime?: {
+      lastError?: { message?: string }
+      sendMessage(
+        extensionId: string,
+        message: { type: string },
+        callback: (response?: { installed?: boolean }) => void,
+      ): void
+    }
+  }
+
+  const extensionId = 'dbokmlpefliilbjldladbimlcfgbolhk'
+  const allowedAttribution = {
+    ref: new Set([
+      'legacy-app',
+      'legacy-app-notification',
+      'legacy-app-window',
+      'legacy-app-uninstall',
+    ]),
+    variant: new Set(['paid', 'lite']),
+    platform: new Set(['chromeos', 'windows', 'macos', 'linux', 'android', 'other']),
+    campaign: new Set(['available-2026']),
+  }
+
+  function getAttribution() {
+    const source = new URLSearchParams(location.search)
+    const accepted = new URLSearchParams()
+    for (const [key, values] of Object.entries(allowedAttribution)) {
+      const value = source.get(key)
+      if (value && values.has(value)) accepted.set(key, value)
+    }
+    return accepted
+  }
+
+  function detectPlatform(attribution: URLSearchParams): MigrationPlatform {
+    const reported = attribution.get('platform')
+    if (reported) return reported as MigrationPlatform
+    const userAgent = navigator.userAgent.toLowerCase()
+    if (userAgent.includes('cros')) return 'chromeos'
+    if (userAgent.includes('android')) return 'android'
+    if (userAgent.includes('win')) return 'windows'
+    if (userAgent.includes('mac')) return 'macos'
+    if (userAgent.includes('linux')) return 'linux'
+    return 'other'
+  }
+
+  const attribution = getAttribution()
+  const platform = detectPlatform(attribution)
+  const variant = attribution.get('variant')
+  const context = document.getElementById('migration-context')
+  const platformNames: Record<MigrationPlatform, string> = {
+    chromeos: 'this Chromebook',
+    android: 'this Android device',
+    windows: 'this Windows computer',
+    macos: 'this Mac',
+    linux: 'this Linux computer',
+    other: 'this device',
+  }
+
+  if (context) {
+    const product = variant === 'lite' ? 'JSTorrent Lite' : 'JSTorrent'
+    context.textContent = `Opened from the old ${product}. Choices for ${platformNames[platform]} are shown first; all supported choices remain available.`
+  }
+
+  document.querySelectorAll('[data-choice]').forEach((element) => {
+    if (!(element instanceof HTMLElement)) return
+    const choice = element.dataset.choice
+    const chromeOsFirst = platform === 'chromeos' || platform === 'android'
+    if (chromeOsFirst) {
+      element.style.order = choice === 'play' ? '1' : choice === 'crostini' ? '2' : '3'
+    } else {
+      element.style.order = choice === 'desktop' ? '1' : choice === 'play' ? '2' : '3'
+    }
+  })
+
+  document.querySelectorAll('[data-migration-link]').forEach((element) => {
+    if (!(element instanceof HTMLAnchorElement)) return
+    const destination = new URL(element.href, location.href)
+    attribution.forEach((value, key) => destination.searchParams.set(key, value))
+    element.href = destination.toString()
+  })
+
+  const extensionStatus = document.getElementById('extension-status')
+  const chromeApi = (globalThis as typeof globalThis & { chrome?: MigrationChromeApi }).chrome
+  try {
+    const chromeRuntime = chromeApi?.runtime
+    if (!chromeRuntime) throw new Error('Chrome extension messaging unavailable')
+    chromeRuntime.sendMessage(extensionId, { type: 'ping' }, (response) => {
+      if (!extensionStatus) return
+      if (!chromeRuntime.lastError && response?.installed) {
+        extensionStatus.classList.add('detected')
+        extensionStatus.textContent =
+          'JSTorrent extension detected. It still needs the desktop app, Android companion, or ChromeOS Linux service for the setup you choose.'
+      } else {
+        extensionStatus.textContent =
+          'JSTorrent extension not detected. Install it only if you want browser integration or choose the ChromeOS Linux setup.'
+      }
+    })
+  } catch {
+    if (extensionStatus) {
+      extensionStatus.textContent =
+        'JSTorrent extension not detected. Install it only if you want browser integration or choose the ChromeOS Linux setup.'
+    }
+  }
+</script>

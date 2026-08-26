@@ -284,16 +284,16 @@ Automated tests must cover:
 
 ### 4. Add the stable website migration route
 
-- [ ] Add `website/src/pages/migrate.astro` using the existing website layout
+- [x] Add `website/src/pages/migrate.astro` using the existing website layout
   and current download destinations.
-- [ ] Put the detected/reported platform first without hiding the other
+- [x] Put the detected/reported platform first without hiding the other
   supported choices.
-- [ ] Treat extension detection as progressive enhancement and distinguish the
+- [x] Treat extension detection as progressive enhancement and distinguish the
   extension from its required backend.
-- [ ] Preserve the documented `ref`, `variant`, `platform`, and `campaign`
+- [x] Preserve the documented `ref`, `variant`, `platform`, and `campaign`
   parameters through relevant download links without adding user identifiers.
-- [ ] Keep the route useful if RSTorrent later becomes the underlying engine.
-- [ ] Verify `/comingsoon.html` and `new.jstorrent.com` compatibility separately.
+- [x] Keep the route useful if RSTorrent later becomes the underlying engine.
+- [x] Verify `/comingsoon.html` and `new.jstorrent.com` compatibility separately.
 
 ### 5. Make paid and Lite packaging reproducible
 
@@ -475,7 +475,7 @@ on source changes.
 | Exact paid/Lite baseline reconciliation | complete | Google update artifacts fetched and hashed on 2026-08-26; paid/Lite executable trees are byte-identical. |
 | Campaign state and automated tests | complete | Ten focused Node tests cover activation, startup throttle, retry, reminder, acknowledgment, permanent stop, same-campaign preservation, explicit launch, variants, and platform routing. |
 | Notification and local migration UI | complete | Shared migration runtime replaces the unshipped maximum-nag experiment; startup is the sole automatic UI trigger and explicit launch opens a bounded local window. |
-| Stable website migration route | pending | |
+| Stable website migration route | implemented; deployment pending | Astro check/build and three focused tests pass. Desktop and 390 px Playwright renders were inspected; the ChromeOS query put Play and Crostini first and preserved only bounded attribution on outgoing links. Existing `jstorrent.com/comingsoon.html` returns 200, and the intentional `new.jstorrent.com` 404 document still preserves the requested path in its browser redirect. The new live `/migrate` route remains 404 until this website commit is deployed. |
 | Reproducible paid/Lite packages | pending | |
 | Physical ChromeOS validation | pending | |
 | Windows VM validation | pending | |
