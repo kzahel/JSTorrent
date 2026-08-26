@@ -355,22 +355,22 @@ the documented secure path and the user's authorization for that run.
 Validate both paid and Lite transition fixtures, with full behavior on at
 least one and a variant smoke on the other:
 
-- [ ] Stage the exact baseline and candidate as unpacked fixtures with stable
+- [x] Stage the exact baseline and candidate as unpacked fixtures with stable
   public test identity, using `chromeos deploy-ext` and the normal
   `chrome://extensions` flow.
-- [ ] Seed the old waitlist-dismissed state, apply the candidate update, and
+- [x] Seed the old waitlist-dismissed state, apply the candidate update, and
   prove no notification appears merely because `onInstalled` ran.
 - [ ] Perform an explicitly authorized ordinary reboot or equivalent genuine
   profile startup, securely restore the selected user session, and prove that
   the migration notification appears near startup.
-- [ ] Capture the rendered title, body, buttons, icon, and persistence with
+- [x] Capture the rendered title, body, buttons, icon, and persistence with
   Machine Control screenshot/accessibility commands.
 - [ ] Restart again inside the seven-day interval and prove there is no second
   prompt.
-- [ ] Exercise reminder, acknowledgment, stable-page routing, and no-prompt
+- [x] Exercise reminder, acknowledgment, stable-page routing, and no-prompt
   after acknowledgment. Use controlled storage timestamps rather than waiting
   seven calendar days for the due-reminder case.
-- [ ] Where possible, exercise explicit legacy launch and verify the richer
+- [x] Where possible, exercise explicit legacy launch and verify the richer
   window. Record the expected current-ChromeOS absence of `onLaunched` rather
   than treating it as a regression.
 - [ ] Verify that the stable page leads to honest Android, extension-plus-
@@ -477,7 +477,7 @@ on source changes.
 | Notification and local migration UI | complete | Shared migration runtime replaces the unshipped maximum-nag experiment; startup is the sole automatic UI trigger and explicit launch opens a bounded local window. |
 | Stable website migration route | implemented; deployment pending | Astro check/build and three focused tests pass. Desktop and 390 px Playwright renders were inspected; the ChromeOS query put Play and Crostini first and preserved only bounded attribution on outgoing links. Existing `jstorrent.com/comingsoon.html` returns 200, and the intentional `new.jstorrent.com` 404 document still preserves the requested path in its browser redirect. The new live `/migrate` route remains 404 until this website commit is deployed. |
 | Reproducible paid/Lite packages | complete | Deterministic builder and validator emit 122-file ZIPs plus public-key-only unpacked test fixtures. Paid `2.4.5`: `e76b7440928c1b6429775a2004c66d1f485cc07457efd976b4f6f129c1a18ac7`; Lite `2.4.13`: `0821158b3f90776ce061e187994cf8c82b476cb3af05dddadff299c82953cd91`. |
-| Physical ChromeOS validation | pending | |
+| Physical ChromeOS validation | in progress; startup-event proof pending | The exact paid baseline `2.4.4` updated silently to `2.4.5` under the paid Store ID, preserved the old waitlist flags, and armed the new campaign with `lastPromptedAt: 0`. The paid notification and actions and the Lite `2.4.13` identity/copy were accepted in the real ChromeOS notification center. A genuine profile startup and second-startup throttle check still require the secure post-restart login path. |
 | Windows VM validation | pending | |
 | Controlled Store delivery | pending | Requires separate authorization. |
 
@@ -510,3 +510,68 @@ Shipping ZIPs contain no manifest `key`. Ignored unpacked fixtures contain
 only the public Store keys, which the builder verifies derive
 `anhdpjpojoipgpmfanmedjghaligalgb` and
 `abmohcnlldaiaodkpacnldcdnjjgldfh`. No private key is present or required.
+
+### Physical ChromeOS evidence
+
+The 2026-08-26 physical-device run used the public Machine Control provider
+and a normal Developer Mode unpacked-app flow. It established the following
+without changing the Store upload artifacts:
+
+- The paid baseline fixture loaded as ID
+  `anhdpjpojoipgpmfanmedjghaligalgb`, version `2.4.4`. After seeding the old
+  `migrationNoticeDismissed` state and applying the candidate, Chrome reported
+  an update from `2.4.4` to `2.4.5`. No notification appeared during that
+  update. The new `available-2026` state was active with
+  `lastPromptedAt: 0`, proving that the old waitlist dismissal neither
+  suppressed nor prematurely displayed the new campaign.
+- The unpacked-update harness briefly retained one initialization exception
+  after copying new files over the running baseline. Inspection proved that
+  the stable candidate's generated background page loaded `conf.js`,
+  `migration.js`, `migration-runtime.js`, and `background.js` in the declared
+  order. A clean candidate reload reproduced no exception, and the app card
+  had no remaining error. This was a non-atomic unpacked-directory harness
+  artifact, not an upload-ZIP ordering defect.
+- The paid native notification rendered with the JSTorrent icon, the title
+  `JSTorrent has a new version`, the short owned URL in its ChromeOS-specific
+  body, and `See migration options` / `Remind me in 7 days` actions. Chrome's
+  notification API retained it and the system notification center exposed the
+  complete card through accessibility.
+- Activating `Remind me in 7 days` cleared the card and wrote a snooze exactly
+  seven days in the future. Re-running the startup handler while snoozed
+  created no notification. Moving only the controlled campaign timestamp past
+  the interval created one new card.
+- Activating the primary action cleared the card, recorded acknowledgment, and
+  opened exactly
+  `https://jstorrent.com/migrate?ref=legacy-app-notification&variant=paid&campaign=available-2026&platform=chromeos`.
+  The route currently returns the expected GitHub Pages 404 because website
+  deployment is still a release gate; notification routing itself is proven.
+- The local migration window rendered accurate ChromeOS composition guidance,
+  correctly detected the installed new extension without claiming setup was
+  complete, and its `Stop reminders` action persisted `disabledAt` and closed
+  the window.
+- Launching the app from the real ChromeOS launcher did not deliver
+  `chrome.app.runtime.onLaunched`. Chrome displayed its system-owned
+  `JSTorrent can't be launched` dialog explaining that Chrome Apps stopped
+  running on ChromeOS in July 2025. This confirms that startup notification is
+  the viable automatic channel on current ChromeOS; the local window remains
+  useful only on runtimes or controlled calls that can still create it.
+- The Lite candidate loaded independently as ID
+  `abmohcnlldaiaodkpacnldcdnjjgldfh`, name `JSTorrent Lite`, version `2.4.13`.
+  Its fresh campaign was active and unprompted, and its real native card used
+  the variant-specific title `JSTorrent Lite has a new version` with the same
+  bounded migration actions and ChromeOS copy.
+
+Representative captures remain outside the repository at:
+
+- `/tmp/jstorrent-chromeos-update-devtools-state.png`
+- `/tmp/jstorrent-chromeos-paid-notification-center.png`
+- `/tmp/jstorrent-chromeos-paid-migration-window.png`
+- `/tmp/jstorrent-chromeos-after-real-launch-click.png`
+- `/tmp/jstorrent-chromeos-lite-notification-center.png`
+
+The remaining ChromeOS acceptance gap is event provenance, not notification
+rendering or state behavior: perform a genuine profile startup, observe the
+first due notification without directly invoking its handler, then perform a
+second startup inside seven days and observe no new card. Secure login input
+is not present in the machine inventory, so that step must use the documented
+human/approved-secret channel rather than placing a PIN in commands or logs.
