@@ -297,25 +297,25 @@ Automated tests must cover:
 
 ### 5. Make paid and Lite packaging reproducible
 
-- [ ] Replace or repair the stale legacy packaging scripts that reference a
+- [x] Replace or repair the stale legacy packaging scripts that reference a
   nonexistent top-level `legacy-app/` directory or mutate source files in
   place.
-- [ ] Represent paid/Lite names and monotonically increasing versions as
+- [x] Represent paid/Lite names and monotonically increasing versions as
   explicit package variants rather than a loop that rewrites localization
   source and leaves backup files.
-- [ ] Emit two clean ZIPs with `manifest.json` at the archive root and exclude
+- [x] Emit two clean ZIPs with `manifest.json` at the archive root and exclude
   repository metadata, documentation, temporary files, source backups, and
   test-only identity material.
-- [ ] Add a validator that inspects both ZIPs, their versions/names, required
+- [x] Add a validator that inspects both ZIPs, their versions/names, required
   migration files, permissions, URLs, and absence of stale waitlist and
   maximum-nag strings.
-- [ ] Compare each candidate's file list against its exact Store baseline and
+- [x] Compare each candidate's file list against its exact Store baseline and
   explain every added, removed, or changed path.
 
 ### 6. Run local automated validation
 
-- [ ] Run the focused legacy migration tests and package validator.
-- [ ] Run the website build and inspect the generated migration page.
+- [x] Run the focused legacy migration tests and package validator.
+- [x] Run the website build and inspect the generated migration page.
 - [ ] Run repository documentation and formatting checks.
 - [ ] Record exact commands and results in the implementation record below.
 
@@ -476,7 +476,7 @@ on source changes.
 | Campaign state and automated tests | complete | Ten focused Node tests cover activation, startup throttle, retry, reminder, acknowledgment, permanent stop, same-campaign preservation, explicit launch, variants, and platform routing. |
 | Notification and local migration UI | complete | Shared migration runtime replaces the unshipped maximum-nag experiment; startup is the sole automatic UI trigger and explicit launch opens a bounded local window. |
 | Stable website migration route | implemented; deployment pending | Astro check/build and three focused tests pass. Desktop and 390 px Playwright renders were inspected; the ChromeOS query put Play and Crostini first and preserved only bounded attribution on outgoing links. Existing `jstorrent.com/comingsoon.html` returns 200, and the intentional `new.jstorrent.com` 404 document still preserves the requested path in its browser redirect. The new live `/migrate` route remains 404 until this website commit is deployed. |
-| Reproducible paid/Lite packages | pending | |
+| Reproducible paid/Lite packages | complete | Deterministic builder and validator emit 122-file ZIPs plus public-key-only unpacked test fixtures. Paid `2.4.5`: `e76b7440928c1b6429775a2004c66d1f485cc07457efd976b4f6f129c1a18ac7`; Lite `2.4.13`: `0821158b3f90776ce061e187994cf8c82b476cb3af05dddadff299c82953cd91`. |
 | Physical ChromeOS validation | pending | |
 | Windows VM validation | pending | |
 | Controlled Store delivery | pending | Requires separate authorization. |
@@ -484,3 +484,29 @@ on source changes.
 Deliberate deferrals, rejected claims, and platform-specific limitations must
 be recorded here during execution so the completed tactical describes what
 was actually proven.
+
+### Candidate artifact reconciliation
+
+The 2026-08-26 paid and Lite upload candidates are byte-reproducible across
+two consecutive local builds. The validator also checks their contents rather
+than trusting filenames or build output. Each candidate differs from its exact
+Store baseline by the same reviewed path set:
+
+- removed: `LICENSE`, `README.md`, `TODO.txt`, the accidentally shipped
+  `_locales/en/messages.json.bak`, and Store-generated
+  `_metadata/verified_contents.json`;
+- added: `migrate.html`, `migrate.js`, `migration.js`, and
+  `migration-runtime.js`; and
+- changed: `background.js` and `manifest.json` only.
+
+The localized messages file remains byte-identical to each matching Store
+baseline. The candidate manifest changes only the monotonically increasing
+variant version and the background script list. The background change points
+uninstall attribution to `/migrate`, suppresses the obsolete immediate generic
+update toast, and removes the old waitlist campaign; the new bounded behavior
+lives in the four added migration files.
+
+Shipping ZIPs contain no manifest `key`. Ignored unpacked fixtures contain
+only the public Store keys, which the builder verifies derive
+`anhdpjpojoipgpmfanmedjghaligalgb` and
+`abmohcnlldaiaodkpacnldcdnjjgldfh`. No private key is present or required.
