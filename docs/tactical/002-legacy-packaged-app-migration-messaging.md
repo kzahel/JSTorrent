@@ -316,8 +316,9 @@ Automated tests must cover:
 
 - [x] Run the focused legacy migration tests and package validator.
 - [x] Run the website build and inspect the generated migration page.
-- [ ] Run repository documentation and formatting checks.
-- [ ] Record exact commands and results in the implementation record below.
+- [x] Run repository documentation and formatting checks. Preserve and record
+  unrelated worktree failures instead of editing user-owned files.
+- [x] Record exact commands and results in the implementation record below.
 
 Expected gates include:
 
@@ -478,6 +479,7 @@ on source changes.
 | Notification and local migration UI | complete | Shared migration runtime replaces the unshipped maximum-nag experiment; startup is the sole automatic UI trigger and explicit launch opens a bounded local window. |
 | Stable website migration route | implemented; deployment pending | Astro check/build and three focused tests pass. Desktop and 390 px Playwright renders were inspected; the ChromeOS query put Play and Crostini first and preserved only bounded attribution on outgoing links. Existing `jstorrent.com/comingsoon.html` returns 200, and the intentional `new.jstorrent.com` 404 document still preserves the requested path in its browser redirect. The new live `/migrate` route remains 404 until this website commit is deployed. |
 | Reproducible paid/Lite packages | complete | Deterministic builder and validator emit 122-file ZIPs plus public-key-only unpacked test fixtures. Paid `2.4.5`: `e76b7440928c1b6429775a2004c66d1f485cc07457efd976b4f6f129c1a18ac7`; Lite `2.4.13`: `0821158b3f90776ce061e187994cf8c82b476cb3af05dddadff299c82953cd91`. |
+| Local repository validation | complete; unrelated docs-check blocker recorded | `pnpm test`, focused migration/page tests, package build/validation, website build, formatting, lint, and `git diff --check` pass. Lint reports zero errors and 41 existing warnings. `pnpm docs:check` reaches only unrelated untracked Android investigation files with missing log links and machine-specific paths; those user-owned files were preserved. |
 | Physical ChromeOS validation | in progress; startup-event proof pending | The exact paid baseline `2.4.4` updated silently to `2.4.5` under the paid Store ID, preserved the old waitlist flags, and armed the new campaign with `lastPromptedAt: 0`. The paid notification and actions and the Lite `2.4.13` identity/copy were accepted in the real ChromeOS notification center. A genuine profile startup and second-startup throttle check still require the secure post-restart login path. |
 | Windows VM validation | complete with toast-activation limitation | Chrome 151 in an isolated Developer Mode profile loaded paid `2.4.4` under the real Store ID, updated silently to `2.4.5`, and produced the desktop-specific native toast only after a complete clean Chrome restart. A second restart inside seven days produced no toast. Windows rendered the body and buttons but did not route body or action activation to the Chrome App; the visible short URL is the required fallback. Direct handler acceptance proved `window.open`, acknowledgment, local UI, and native removal. |
 | Controlled Store delivery | pending | Requires separate authorization. |
@@ -511,6 +513,42 @@ Shipping ZIPs contain no manifest `key`. Ignored unpacked fixtures contain
 only the public Store keys, which the builder verifies derive
 `anhdpjpojoipgpmfanmedjghaligalgb` and
 `abmohcnlldaiaodkpacnldcdnjjgldfh`. No private key is present or required.
+
+### Local validation record
+
+The final pre-publication repository run used these exact commands:
+
+```bash
+pnpm package:legacy-app
+pnpm validate:legacy-app
+pnpm test
+pnpm test:legacy-app
+pnpm test:migration-page
+pnpm --dir website build
+pnpm lint
+pnpm format
+pnpm docs:check
+git diff --check
+```
+
+Results on 2026-08-26:
+
+- The full recursive `pnpm test` run passed, including the focused legacy and
+  website suites. This clean rerun closes the earlier one-off daemon startup
+  timeout observed during investigation.
+- The focused legacy suites passed 11/11 tests and the migration-page suite
+  passed 3/3 tests.
+- Packaging and validation both reproduced the recorded 122-file paid and
+  Lite ZIP hashes exactly.
+- Astro reported zero errors, warnings, or hints and generated
+  `website/dist/migrate/index.html`.
+- ESLint exited successfully with zero errors and 41 existing warnings.
+- Prettier and `git diff --check` passed.
+- `pnpm docs:check` failed only while scanning the unrelated untracked
+  `docs/investigations/android-memory-results/` work. Its README contains four
+  missing local log targets and four machine-specific absolute paths. Those
+  files predated and are outside this campaign, so they remain untouched. No
+  failure named a migration file changed by this tactical.
 
 ### Physical ChromeOS evidence
 
