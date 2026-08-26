@@ -402,19 +402,20 @@ Use PowerShell/SSH for staging and Machine Control's semantic Windows UI route
 for Chrome. Provider screenshot or coordinate input is recovery-only and
 requires the applicable disruptive claim.
 
-- [ ] Load exact baseline and candidate fixtures in a disposable Chrome
+- [x] Load exact baseline and candidate fixtures in a disposable Chrome
   Developer Mode profile without disturbing an unrelated browser profile.
-- [ ] Prove the candidate update is silent until Chrome/profile startup.
-- [ ] Start Chrome through the interactive desktop route and verify the
+- [x] Prove the candidate update is silent until Chrome/profile startup.
+- [x] Start Chrome through the interactive desktop route and verify the
   platform-specific notification text and seven-day throttle.
-- [ ] Verify body/primary activation opens the stable Windows migration route;
-  test the `window.open` fallback and keep the short URL visible if Windows
-  cannot route native toast activation to the disposable Chrome profile.
-- [ ] Verify reminder and acknowledgment state across complete Chrome process
-  restarts.
+- [x] Attempt body/primary activation, record whether Windows routes it back to
+  the disposable Chrome profile, test the `window.open` fallback, and keep the
+  short URL visible when native toast activation is not delivered.
+- [x] Verify the prompt interval and acknowledgment state across complete
+  Chrome process restarts. Record any toast-action delivery limitation
+  separately from the campaign state behavior.
 - [ ] Verify the website's Windows destination and that the extension is
   described as optional integration rather than the torrent engine.
-- [ ] Capture the visible result and semantic state where available, restore
+- [x] Capture the visible result and semantic state where available, restore
   the disposable profile, and perform claim-aware VM cleanup.
 
 Windows Developer Mode evidence proves runtime behavior, not that the Chrome
@@ -478,7 +479,7 @@ on source changes.
 | Stable website migration route | implemented; deployment pending | Astro check/build and three focused tests pass. Desktop and 390 px Playwright renders were inspected; the ChromeOS query put Play and Crostini first and preserved only bounded attribution on outgoing links. Existing `jstorrent.com/comingsoon.html` returns 200, and the intentional `new.jstorrent.com` 404 document still preserves the requested path in its browser redirect. The new live `/migrate` route remains 404 until this website commit is deployed. |
 | Reproducible paid/Lite packages | complete | Deterministic builder and validator emit 122-file ZIPs plus public-key-only unpacked test fixtures. Paid `2.4.5`: `e76b7440928c1b6429775a2004c66d1f485cc07457efd976b4f6f129c1a18ac7`; Lite `2.4.13`: `0821158b3f90776ce061e187994cf8c82b476cb3af05dddadff299c82953cd91`. |
 | Physical ChromeOS validation | in progress; startup-event proof pending | The exact paid baseline `2.4.4` updated silently to `2.4.5` under the paid Store ID, preserved the old waitlist flags, and armed the new campaign with `lastPromptedAt: 0`. The paid notification and actions and the Lite `2.4.13` identity/copy were accepted in the real ChromeOS notification center. A genuine profile startup and second-startup throttle check still require the secure post-restart login path. |
-| Windows VM validation | pending | |
+| Windows VM validation | complete with toast-activation limitation | Chrome 151 in an isolated Developer Mode profile loaded paid `2.4.4` under the real Store ID, updated silently to `2.4.5`, and produced the desktop-specific native toast only after a complete clean Chrome restart. A second restart inside seven days produced no toast. Windows rendered the body and buttons but did not route body or action activation to the Chrome App; the visible short URL is the required fallback. Direct handler acceptance proved `window.open`, acknowledgment, local UI, and native removal. |
 | Controlled Store delivery | pending | Requires separate authorization. |
 
 Deliberate deferrals, rejected claims, and platform-specific limitations must
@@ -575,3 +576,64 @@ first due notification without directly invoking its handler, then perform a
 second startup inside seven days and observe no new card. Secure login input
 is not present in the machine inventory, so that step must use the documented
 human/approved-secret channel rather than placing a PIN in commands or logs.
+
+### Windows VM evidence
+
+The 2026-08-26 Windows run used an exclusive ordinary-use Machine Control
+claim and a disposable Chrome profile on Windows 11. The VM was stopped before
+the run and was cleanly returned to that state before the claim was released.
+The run established:
+
+- Chrome `151.0.7922.174` still loads unpacked Chrome Apps in Developer Mode.
+  The exact paid fixture appeared as ID
+  `anhdpjpojoipgpmfanmedjghaligalgb`, version `2.4.4`.
+- After the old waitlist state was seeded, the fixture directory was replaced
+  with the exact 122-file paid candidate and reloaded. The card reported
+  `2.4.5`; no toast or other migration UI appeared. The stable generated
+  background page loaded the four declared scripts in order, retained the old
+  dismissal fields, and armed `available-2026` with `lastPromptedAt: 0` and no
+  notification.
+- A complete clean Chrome exit and interactive relaunch fired the real startup
+  path. Windows displayed a native Google Chrome toast with the JSTorrent icon,
+  `JSTorrent has a new version`, the desktop copy, visible
+  `jstorrent.com/migrate`, and both migration/reminder buttons. UI Automation
+  exposed the complete card and button names.
+- Clearing that card without changing campaign state, then performing another
+  complete clean Chrome exit/relaunch inside seven days, produced no toast and
+  no Chrome notification. The persisted `lastPromptedAt` value was unchanged.
+- Windows did not deliver native toast activation to the disposable Chrome App
+  profile. UI Automation tested InvokePattern and a focused physical click on
+  `Remind me in 7 days`, a focused physical click on `See migration options`,
+  and a focused click on the notification body. Each dismissed the visible
+  toast but created no tab and triggered no state transition; Chrome continued
+  to report the notification internally. This matches the earlier 200 OK
+  Chrome-App migration evidence and makes the visible short URL essential.
+- The app-side notification handler remains correct if Chrome delivers the
+  callback: `chrome.browser` is undefined on this Windows runtime, so the real
+  fallback used `window.open` to open exactly
+  `https://jstorrent.com/migrate?ref=legacy-app-notification&variant=paid&campaign=available-2026&platform=windows`
+  and persisted acknowledgment. Moving the prompt time eight days into the
+  past and restarting Chrome still produced no toast after acknowledgment.
+- The bounded local window rendered honest desktop guidance: install the
+  standalone desktop app, with the extension described as optional browser
+  integration. Its `Remove old app` action displayed Chrome's native
+  `Remove "JSTorrent"?` confirmation with abuse-report, Remove, and Cancel
+  controls. Confirming Remove removed only the disposable legacy app.
+- The live migration URL still returned the documented deployment-gate 404.
+  Therefore the exact route and platform attribution are accepted, but the
+  Windows page destination cannot be called live-accepted until the website is
+  deployed.
+
+Representative captures remain outside the repository at:
+
+- `/tmp/jstorrent-windows-paid-baseline.png`
+- `/tmp/jstorrent-windows-paid-update-silent.png`
+- `/tmp/jstorrent-windows-paid-startup-notification.png`
+- `/tmp/winvm-ui.nIpjEE/screenshot.png` (local migration window)
+- `/tmp/winvm-ui.tZqi2C/screenshot.png` (native removal confirmation)
+
+Cleanup deleted the exact disposable Windows staging/profile directory after
+the legacy app was removed and Chrome exited. Those generated test files are
+not recoverable and contained no user data. The target doctor passed before a
+clean guest shutdown; final target status was powered off and the exclusive
+claim was released.
